@@ -1,6 +1,6 @@
 (defproject grunf "0.1.0-SNAPSHOT"
   :description "simple infrastructure monitoring toolkit"
-  :url "http://bithacks.net/grunf"
+  :url "https://github.com/SupplyFrame/grunf"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [
