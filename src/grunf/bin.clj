@@ -15,7 +15,7 @@
 (defn fetch
 	"fetch given url"
 	[url]
-	(println (count (:body (client/get url)))))
+	(count (:body (client/get url))))
 
 (defn fetchTime
 	"get url fetch time"
