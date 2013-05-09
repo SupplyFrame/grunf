@@ -7,10 +7,9 @@
 			[clojurewerkz.quartzite.scheduler :as qs]
 			[clojurewerkz.quartzite.triggers :as t]
 			[clojurewerkz.quartzite.jobs :as j]
-			[clojurewerkz.quartzite.conversion :as qc]
-		)
+			[clojurewerkz.quartzite.conversion :as qc])
 	(:use [clojurewerkz.quartzite.jobs :only [defjob]]
-		[clojurewerkz.quartzite.schedule.simple :only [schedule with-repeat-count with-interval-in-milliseconds repeat-forever]])
+	      [clojurewerkz.quartzite.schedule.simple :only [schedule with-repeat-count with-interval-in-milliseconds repeat-forever]])
 	(:gen-class))
 
 (defn fetch
@@ -48,13 +47,12 @@
         (println message))
 
 (defn -main
-	"Start Grunf. Pass remote hostname or config as argv"
+	"Start Grunf. Pass hostnames/poll interval as (first argv)"
 	[& argv]
 	(if (< (count argv) 1)
 		(do
 			(println "usage: lein run -m grunf.bin '([hostname_list] poll_interval)'")
 			(System/exit 0)))
-
 	(try
 		(qs/initialize)
 		(qs/start)
