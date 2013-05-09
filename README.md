@@ -4,7 +4,7 @@
 
 ## Usage
 
-lein run -m grunf.bin '([hostname_list] poll_interval(ms))'
+lein run -m grunf.bin '([hostname_list] poll_interval_ms)'
 
 Example:
 
