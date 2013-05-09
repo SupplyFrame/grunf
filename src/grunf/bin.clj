@@ -1,22 +1,17 @@
 
-; Simple Scheduled Monitoring Fetch Loop
+; grunf | simple http monitoring loop
 
 (ns grunf.bin
-	"Main function"
+	"grunf.main"
 	(:require [clj-http.client :as client]	
-				[clojurewerkz.quartzite.scheduler :as qs]
-				[clojurewerkz.quartzite.triggers :as t]
-				[clojurewerkz.quartzite.jobs :as j]
-				[clojurewerkz.quartzite.conversion :as qc]
+			[clojurewerkz.quartzite.scheduler :as qs]
+			[clojurewerkz.quartzite.triggers :as t]
+			[clojurewerkz.quartzite.jobs :as j]
+			[clojurewerkz.quartzite.conversion :as qc]
 		)
 	(:use [clojurewerkz.quartzite.jobs :only [defjob]]
 		[clojurewerkz.quartzite.schedule.simple :only [schedule with-repeat-count with-interval-in-milliseconds repeat-forever]])
 	(:gen-class))
-
-(defn args-seq [& argv]
-	(class argv)
-	(println argv)
-	)
 
 (defn fetch
 	"fetch given url"
@@ -27,10 +22,6 @@
 	"get url fetch time"
 	[url]
 	(map #(Double/parseDouble %) (re-seq #"[0-9]+.[0-9]+" (with-out-str (time (fetch url))))))
-
-(defn error
-	[exception message]
-	(println message))
 
 (defjob FetchJob
 	[ctx]
@@ -51,6 +42,10 @@
 			  			(repeat-forever)
 			  			(with-interval-in-milliseconds interval))))]
 		  (qs/schedule job trigger)))
+
+(defn error
+        [exception message]
+        (println message))
 
 (defn -main
 	"Start Grunf. Pass remote hostname or config as argv"
