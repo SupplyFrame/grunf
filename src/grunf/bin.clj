@@ -18,13 +18,6 @@
 	(println argv)
 	)
 
-(def urls (atom #{})) ; set of active urls
-
-(defn add
-	"add endpoint url"
-	[url]
-	(swap! urls conj url))
-
 (defn fetch
 	"fetch given url"
 	[url]
@@ -48,21 +41,20 @@
 	"submit fetch job for execution"
 	[url interval]
 	(let [job (j/build
-				(j/of-type FetchJob)
-				(j/using-job-data {"url" url})
-				(j/with-identity (j/key (str "jobs.fetch." url) )))
+		  (j/of-type FetchJob)
+		  (j/using-job-data {"url" url})
+		  (j/with-identity (j/key (str "jobs.fetch." url) )))
 		  trigger (t/build
-			  		(t/with-identity (t/key (str "triggers." url) ))
-			  		(t/start-now)
-			  		(t/with-schedule (schedule
-			  							(repeat-forever)
-			  							(with-interval-in-milliseconds interval))))]
+			  (t/with-identity (t/key (str "triggers." url) ))
+			  (t/start-now)
+			  (t/with-schedule (schedule
+			  			(repeat-forever)
+			  			(with-interval-in-milliseconds interval))))]
 		  (qs/schedule job trigger)))
 
 (defn -main
 	"Start Grunf. Pass remote hostname or config as argv"
 	[& argv]
-
 	(if (< (count argv) 1)
 		(do
 			(println "usage: lein run -m grunf.bin '([hostname_list] poll_interval)'")
@@ -75,5 +67,3 @@
 		(catch Exception e
 			(println e)
 			(error e "Error starting the app"))))
-
-
