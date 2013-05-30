@@ -9,7 +9,8 @@
 		  [clojurewerkz.quartzite.jobs :as j]
 		  [clojurewerkz.quartzite.conversion :as qc])
 	(:use [clojurewerkz.quartzite.jobs :only [defjob]]
-	      [clojurewerkz.quartzite.schedule.simple :only [schedule with-repeat-count with-interval-in-milliseconds repeat-forever]])
+	      [clojurewerkz.quartzite.schedule.simple :only [schedule with-repeat-count with-interval-in-milliseconds repeat-forever]]
+              [clojure.tools.cli :only [cli]])
 	(:gen-class))
 
 (defn fetch
@@ -31,32 +32,46 @@
 	"submit fetch job for execution"
 	[url interval]
 	(let [job (j/build
-		  (j/of-type FetchJob)
-		  (j/using-job-data {"url" url})
-		  (j/with-identity (j/key (str "jobs.fetch." url) )))
-		  trigger (t/build
-			  (t/with-identity (t/key (str "triggers." url) ))
-			  (t/start-now)
-			  (t/with-schedule (schedule
-			  			(repeat-forever)
-			  			(with-interval-in-milliseconds interval))))]
-		  (qs/schedule job trigger)))
+                   (j/of-type FetchJob)
+                   (j/using-job-data {"url" url})
+                   (j/with-identity (j/key (str "jobs.fetch." url) )))
+              trigger (t/build
+                       (t/with-identity (t/key (str "triggers." url) ))
+                       (t/start-now)
+                       (t/with-schedule (schedule
+                                         (repeat-forever)
+                                         (with-interval-in-milliseconds interval))))]
+          (qs/schedule job trigger)))
 
 (defn error
         [exception message]
         (println message))
 
 (defn -main
-	"Start Grunf. Pass hostnames/poll interval as (first argv)"
-	[& argv]
-	(if (< (count argv) 1)
-		(do
-			(println "usage: lein run -m grunf.bin '([hostname_list] poll_interval)'")
-			(System/exit 0)))
-	(try
-		(qs/initialize)
-		(qs/start)
-		(doseq [url (first (read-string (first argv)))] (submitFetchJob url (last (read-string (first argv)))))
-		(catch Exception e
-			(println e)
-			(error e "Error starting the app"))))
+  "Start Grunf. Pass hostnames/poll interval as (first argv)"
+  [& argv]
+  (let [[options args banner]
+        (cli argv
+             ["-c" "--config" "path to config file"]
+             ["-s" "--hosts" "list of host names spearated by commas" :parse-fn #(vec (.split % ","))]
+             ["-t" "--interval" "poll interval" :parse-fn #(Integer. %)]
+             ["--help" "print this help message" :default false :flag true])]
+    (when (or (:help options) (nil? argv))
+      (println banner)
+      (System/exit 0))
+    (try
+      (qs/initialize)
+      (qs/start)
+      (let [[hosts interval]
+            (if-let [config-file (:config options)]
+              (->> (slurp config-file)
+                   (read-string)
+                   ((juxt :hosts :interval)))
+              ((juxt :hosts :interval) options))]
+        (when (or (nil? hosts) (nil? interval))
+          (println "must specify config file or '--hosts http://google.com,http://yahoo.com --interval 1000'")
+          (System/exit 0))
+        (map #(submitFetchJob % interval) hosts))
+      (catch Exception e
+        (println e)
+        (error e "Error starting the app")))))
