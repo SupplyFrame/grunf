@@ -4,11 +4,21 @@
 
 ## Usage
 
-lein run -m grunf.bin '([hostname_list] poll_interval_ms)'
+```
+ Switches           Default  Desc
+ --------           -------  ----
+ -c, --config                path to the config file
+ -s, --hosts                 list of host names spearated by commas
+ -t, --rps                   requests per second
+ --no-help, --help  false    print this help message
+```
 
-Example:
+Example
 
-lein run -m grunf.bin '(["http://www.google.com" "http://www.yahoo.com" "http://www.bing.com"] 1000)'
+```
+lein run -- -s http://google.com,http://yahoo.com -t 3000
+lein run -- -c conf.example.com
+```
 
 ## License
 
