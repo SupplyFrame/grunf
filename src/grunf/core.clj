@@ -1,11 +1,14 @@
 (ns grunf.core
   "gurnf.core"
   (:require [org.httpkit.client :as http])
+  (:use [clojure.template :only [do-template]])
   (:import [java.net Socket]
            [java.io PrintWriter]))
 
-(defn- now []
-  (int (/ (System/currentTimeMillis) 1000)))
+(defn- now [] (System/currentTimeMillis))
+
+(defn- to-sec [milisec]
+  (-> milisec (/ 1000) (int)))
 
 (defn- write-graphite [log]
   (binding [*out* (-> (Socket. "localhost" 2003)
@@ -19,6 +22,7 @@
                                   value
                                   timestamp])]
 ;;    (println log)
+    ;; can add log4j here
     (write-graphite log)))
 
 
@@ -29,11 +33,15 @@
       (http/get url (assoc http-options :as :text)
                 (fn [{:keys [status headers body error opts]}]
                   (if error
-                    (log-graphite (str name ".error") 1 start)
-                    (do
-                      (log-graphite (str name ".error") 0 start)
-                      (log-graphite (str name ".response_time") (- (now) start) start)
-                      (log-graphite (str name ".response_size") (count (map int body)) start)))))
+                    (log-graphite (str name ".error") 1 (to-sec start))
+                    (do-template
+                     [type value]
+                     (log-graphite (str name type) value (to-sec start))
+                     ".error" 0
+                     ".response_time" (-> (now)
+                                          (- start)
+                                          (/ 1000.))
+                     ".response_size" (count (map int body))))))
       (Thread/sleep interval)
       (recur))))
 
