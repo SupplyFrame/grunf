@@ -32,7 +32,8 @@
     (let [start (now)]
       (http/get url (assoc http-options :as :text)
                 (fn [{:keys [status headers body error opts]}]
-                  (if error
+                  (if (or error (not ((eval validator)
+                                      body)))
                     (log-graphite (str name ".error") 1 (to-sec start))
                     (do-template
                      [type value]
