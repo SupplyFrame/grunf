@@ -1,9 +1,21 @@
 (ns grunf.core
   "gurnf.core"
   (:require [org.httpkit.client :as http])
-  (:use [clojure.template :only [do-template]])
+  (:use [clojure.template :only [do-template]]
+        clojure.tools.logging
+        clj-logging-config.log4j
+        )
   (:import [java.net Socket]
-           [java.io PrintWriter]))
+           [java.io PrintWriter]
+           [org.apache.log4j DailyRollingFileAppender EnhancedPatternLayout]))
+
+
+(set-logger! :level :debug
+             :out (DailyRollingFileAppender.
+                   (EnhancedPatternLayout. EnhancedPatternLayout/TTCC_CONVERSION_PATTERN)
+                   "logs/foo.log"
+                   "'.'yyyy-MM-dd")
+             )
 
 (defn- now [] (System/currentTimeMillis))
 
@@ -21,8 +33,7 @@
                                  [(str "grunf." name)
                                   value
                                   timestamp])]
-;;    (println log)
-    ;; can add log4j here
+    (info log)
     (write-graphite log)))
 
 

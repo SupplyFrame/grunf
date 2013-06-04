@@ -5,11 +5,10 @@
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [
+                 [clj-logging-config "1.9.10"]
+                 [log4j/log4j "1.2.16" :exclusions [javax.mail/mail javax.jms/jms com.sun.jdmk/jmxtools com.sun.jmx/jmxri]]
+                 [org.clojure/tools.logging "0.2.6"]
                  [http-kit "2.1.2"]
-                 [clj-time "0.5.1"]
-                 [com.taoensso/timbre "1.6.0"]
                  [org.clojure/tools.cli "0.2.2"]
                  [org.clojure/clojure "1.5.1"]
-                 [org.slf4j/slf4j-nop "1.7.2"]
-                 [clj-http "0.4.1"]
-                 [clojurewerkz/quartzite "1.0.1"]])
+                 ])

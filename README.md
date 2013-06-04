@@ -4,6 +4,16 @@
 
 ## Usage
 
+Type these commands:
+
+```
+mkdir logs
+lein trampoline run -c conf.example.clj &
+tail -f logs/foo.log
+```
+
+The command line options for grunf are:
+
 ```
  Switches      Default  Desc
  --------      -------  ----
@@ -11,11 +21,7 @@
  -h, --help             Print this message
 ```
 
-### Example
-
-```
-lein run -c conf.example.clj
-```
+The configuration file format for `conf.example.clj` is
 
 ```clj
 [{:name "yahoo"
@@ -29,6 +35,9 @@ lein run -c conf.example.clj
   }]
 ```
 
+## TODO
+
+Write tutorial of using grunf with graphite
 
 ## License
 
