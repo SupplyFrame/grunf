@@ -5,20 +5,30 @@
 ## Usage
 
 ```
- Switches           Default  Desc
- --------           -------  ----
- -c, --config                path to the config file
- -s, --hosts                 list of host names spearated by commas
- -t, --rps                   requests per second
- --no-help, --help  false    print this help message
+ Switches      Default  Desc
+ --------      -------  ----
+ -c, --config           Path to the config file 
+ -h, --help             Print this message
 ```
 
-Example
+### Example
 
 ```
-lein run -- -s http://google.com,http://yahoo.com -t 3000
-lein run -- -c conf.example.com
+lein run -c conf.example.clj
 ```
+
+```clj
+[{:name "yahoo"
+  :url "http://www.yahoo.com/"
+  :meta {:from "0.0.0.0"}
+  :interval 1000
+  :validator #(re-find #"yahoo" %)
+  :http-options {:timeout 2000
+                 :user-agent "Mozilla"}
+  :redirect True
+  }]
+```
+
 
 ## License
 
