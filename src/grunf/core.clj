@@ -21,15 +21,13 @@
                         ;; May become thread local in the future
 
 (declare now to-sec write-graphite log-graphite private-fetch)
-(def ^:dynamic *graphite-ns*)
-(def ^:dynamic *validator*)
-(def ^:dynamic *start*)
+
 
 (defmulti callback
   "dispatch fetch callbacks base on connection error or http status"
   (fn [{:keys [status error]}]
     (if error :error
-        (quot status 100)
+        (case (quot status 100)
           2 :success
           3 :redirect
           :error))))
@@ -39,7 +37,7 @@
   (binding [*out* (-> (Socket. "localhost" 2003)
                       (.getOutputStream)
                       (PrintWriter.))]
-    (println (str *graphite-ns* ".error") 1 (-> (:start opts) (/ 1000) (int)))))
+    (println (str (:graphite-ns opts) ".error") 1 (-> (:start opts) (/ 1000) (int)))))
 
 (defmethod callback :success [{:keys [status body opts]}]
   (log/info status (:url opts))
