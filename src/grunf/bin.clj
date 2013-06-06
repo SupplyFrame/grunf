@@ -3,9 +3,11 @@
 
 (ns grunf.bin
   "grunf.main"
-  (:require [org.httpkit.client :as http])
+  (:require [org.httpkit.client :as http]
+            [grunf.core :as grunf])
   (:use [clojure.tools.cli :only [cli]]
-        [grunf.core])
+        clj-logging-config.log4j)
+  (:import [org.apache.log4j DailyRollingFileAppender EnhancedPatternLayout])
   (:gen-class))
 
 
@@ -17,9 +19,15 @@
     (when (or (:help options) (nil? argv))
       (println banner)
       (System/exit 0))
+    (set-loggers! "grunf.core"
+                  {:level :debug
+                   :out (DailyRollingFileAppender.
+                         (EnhancedPatternLayout. "%d{ISO8601}{GMT} [%-5p] [%t] - %m%n")
+                         "logs/foo.log"
+                         "'.'yyyy-MM-dd")})
     (->> (slurp (:config options))
          (read-string)
-         (pmap fetch))))
+         (pmap grunf/fetch))))
 
 
 ;; (defn -main

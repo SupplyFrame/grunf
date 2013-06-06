@@ -3,22 +3,15 @@
   (:require [org.httpkit.client :as http]
             [clojure.string :as str]
             [clojure.tools.logging :as log])
-  (:use [clojure.template :only [do-template]]
-        clj-logging-config.log4j)
+  (:use [clojure.template :only [do-template]])
+        
   (:import [java.net Socket]
-           [java.io PrintWriter]
-           [org.apache.log4j DailyRollingFileAppender EnhancedPatternLayout]))
+           [java.io PrintWriter]))
 
-(set-logger! :level :debug
-             :out (DailyRollingFileAppender.
-                   (EnhancedPatternLayout. "%d{ISO8601}{GMT} [%-5p] [%t] - %m%n")
-                   "logs/foo.log"
-                   "'.'yyyy-MM-dd")
-             )
+
 
 (defn set-graphite! []) ;; set by main args
-(defn set-log4j! [])    ;; set by main args
-                        ;; May become thread local in the future
+
 
 (declare now to-sec write-graphite log-graphite private-fetch)
 
