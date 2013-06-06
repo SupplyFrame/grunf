@@ -31,6 +31,11 @@
                                                      (:log options)
                                                      "'.'yyyy-MM-dd")
                           :console)})
-    (->> (slurp (:config options)) ;; should handle file not found exception
-         (read-string)
+    (->> (try
+           (slurp (:config options))
+           (catch java.io.IOException e
+             (println "File not found:" (:config options))
+             (System/exit -1)))
+         (read-string) ;; should handle parse error exception
+         ;; should varify the parsed string
          (pmap grunf/fetch))))

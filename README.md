@@ -8,34 +8,42 @@ Type these commands:
 
 ```
 mkdir logs
-lein trampoline run -c conf.example.clj &
+lein trampoline run -c conf.example.clj
 tail -f logs/foo.log
 ```
 
 The command line options for grunf are:
 
 ```
- Switches      Default  Desc
- --------      -------  ----
- -c, --config           Path to the config file 
- -h, --help             Print this message
+Usage:
+
+ Switches               Default  Desc
+ --------               -------  ----
+ -c, --config                    Path to the config file
+ -h, --no-help, --help  false    Print this message
+ --log                           log path for log4j. If not specified, log to console 
+ --log-level            debug    log level for log4j, (fatal|error|warn|info|debug)
 ```
 
 The configuration file format for `conf.example.clj` is
 
 ```clj
-[{
-  :url "http://www.yahoo.com/"
-  :interval 1000
-  :validator #(re-find #"yahoo" %)
-  :http-options {:timeout 2000
+[{:url "http://www.yahoo.com/"
+  :interval 1000                      ;; optional
+  :validator #(re-find #"yahoo" %)    ;; optional
+  :http-options {:timeout 2000        ;; :http-options itself is also optional 
                  :user-agent "Mozilla"}
-  }]
+  :graphite-ns "com.yahoo.www"        ;; defualt to reverse domain name
+  }
+  {:url "http://www.google.com"}      ;; only url is required
+]
 ```
 
 ## TODO
 
-Write tutorial of using grunf with graphite
+1. Write tutorial of using grunf with graphite
+
+2. Refactor to make it testable (and more funtional idomatic).
 
 ## License
 
