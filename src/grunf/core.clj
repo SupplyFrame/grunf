@@ -87,7 +87,7 @@
          validator nil,
          graphite-ns ""}}]
     (loop []
-      (let [graphite-ns (if graphite-ns graphite-ns (url->rev-host url) )              
+      (let [graphite-ns (or graphite-ns (url->rev-host url))              
             validator (if validator (eval validator) (constantly true))
             start (System/currentTimeMillis)]
       (private-fetch url method
