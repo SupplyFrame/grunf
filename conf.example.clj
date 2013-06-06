@@ -17,11 +17,8 @@
   :http-options {:timeout 2000
                  :user-agent "Mozilla"}
   }
- {:url "http://yahoo.com"
-  :validator #(re-find #"yahoo" %)
-  :http-options {:timeout 2000
-                 :user-agent "Mozilla"}}
- ]
+ {:url "http://yahoo.com"}
+]
 
 ;; {:hosts ["http://google.com" "http://yahoo.com"]
 ;;  :interval 1000}
