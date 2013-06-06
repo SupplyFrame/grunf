@@ -85,18 +85,28 @@
 
 
 ;; predicate instead of validator?
+
+;; Refactoring note:
+;; fetch should be testable; instead of making an infinite loop,
+;; It should be called by an infinite loop
+
 (defn fetch
   "not documented yet"
   [{:keys [url interval method http-options validator graphite-ns]
-    :or {interval 5000, method :get}}]
+    :or {interval 5000,
+         method :get,
+         http-options {},
+         validator nil,
+         graphite-ns ""}}]
     (loop []
       (let [graphite-ns (if graphite-ns graphite-ns (url->rev-host url) )              
-            validator (if validator (eval validator) #(constantly true))
+            validator (if validator (eval validator) (constantly true))
             start (System/currentTimeMillis)]
       (private-fetch url method
                      (assoc http-options
                        :validator validator
                        :graphite-ns graphite-ns
-                       :start start))
+                       :start start
+                       :as :text))
       (Thread/sleep interval)
       (recur))))
