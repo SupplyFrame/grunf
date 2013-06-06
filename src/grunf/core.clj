@@ -1,103 +1,104 @@
 (ns grunf.core
   "gurnf.core"
-  (:require [org.httpkit.client :as http])
+  (:require [org.httpkit.client :as http]
+            [clojure.string :as str]
+            [clojure.tools.logging :as log])
   (:use [clojure.template :only [do-template]]
-        clojure.tools.logging
-        clj-logging-config.log4j
-        )
+        clj-logging-config.log4j)
   (:import [java.net Socket]
            [java.io PrintWriter]
            [org.apache.log4j DailyRollingFileAppender EnhancedPatternLayout]))
 
-
 (set-logger! :level :debug
              :out (DailyRollingFileAppender.
-                   (EnhancedPatternLayout. EnhancedPatternLayout/TTCC_CONVERSION_PATTERN)
+                   (EnhancedPatternLayout. "%d{ISO8601}{GMT} [%-5p] [%t] - %m%n")
                    "logs/foo.log"
                    "'.'yyyy-MM-dd")
              )
 
-(defn- now [] (System/currentTimeMillis))
+(defn set-graphite! []) ;; set by main args
+(defn set-log4j! [])    ;; set by main args
+                        ;; May become thread local in the future
 
-(defn- to-sec [milisec]
-  (-> milisec (/ 1000) (int)))
+(declare now to-sec write-graphite log-graphite private-fetch)
+(def ^:dynamic *graphite-ns*)
+(def ^:dynamic *validator*)
+(def ^:dynamic *start*)
 
-(defn- write-graphite [log]
+(defmulti callback
+  "dispatch fetch callbacks base on connection error or http status"
+  (fn [{:keys [status error]}]
+    (if error :error
+        (quot status 100)
+          2 :success
+          3 :redirect
+          :error))))
+
+(defmethod callback :error [{:keys [error status opts headers]}]
+  (log/error status (:url opts) error headers)
   (binding [*out* (-> (Socket. "localhost" 2003)
                       (.getOutputStream)
                       (PrintWriter.))]
-    (println log)))
+    (println (str *graphite-ns* ".error") 1 (-> (:start opts) (/ 1000) (int)))))
 
-(defn- log-graphite [name value timestamp]
-  (let [log (clojure.string/join " "
-                                 [(str "grunf." name)
-                                  value
-                                  timestamp])]
-    (info log)
-    (write-graphite log)))
+(defmethod callback :success [{:keys [status body opts]}]
+  (log/info status (:url opts))
+  (when-not ((:validator opts) body) (log/error status (:url opts) "-- validate failed"))
+  (binding [*out* (-> (Socket. "localhost" 2003)
+                      (.getOutputStream)
+                      (PrintWriter.))]
+    (do-template
+     [type value]
+     (println (str (:graphite-ns opts) "." type)
+              value
+              (-> (:start opts) (/ 1000) (int)))
+     "response_time" (- (System/currentTimeMillis) (:start opts))
+     "response_size" (count (map int body))
+     "error" (if ((:validator opts) body) 0 1))))
+
+(defmethod callback :redirect [{:keys [status headers opts]}]
+  (log/info status "redirect" (:url opts) "->" (:location headers))
+  (private-fetch (:location headers) (:method opts) opts))
 
 
 
-(defn fetch [{:keys [name url http-options interval validator redirect]}]
-  (loop []
-    (let [start (now)]
-      (http/get url (assoc http-options :as :text)
-                (fn [{:keys [status headers body error opts]}]
-                  (if (or error (not ((eval validator)
-                                      body)))
-                    (log-graphite (str name ".error") 1 (to-sec start))
-                    (do-template
-                     [type value]
-                     (log-graphite (str name type) value (to-sec start))
-                     ".error" 0
-                     ".response_time" (-> (now)
-                                          (- start)
-                                          (/ 1000.))
-                     ".response_size" (count (map int body))))))
+;; names need to be refactored
+(defn- private-fetch [url method http-options]
+  ((case method
+     :get http/get
+     :post http/post
+     :put http/put
+     :delete http/delete) url http-options callback))
+
+(defmacro ->>split
+  "Thread last friendly split"
+  [sep form]
+  `(clojure.string/split ~form ~sep))
+
+(defn- url->rev-host
+  "Resove host, than reverse the order
+   http://www.yahoo.com/search.html -> com.yahoo.www"
+  [url]
+  (->> url
+       (re-find #"(?<=://).+?(?=/|$)")
+       (->>split #"\.")
+       (reverse)
+       (str/join ".")))
+
+
+;; predicate instead of validator?
+(defn fetch
+  "not documented yet"
+  [{:keys [url interval method http-options validator graphite-ns]
+    :or {interval 5000, method :get}}]
+    (loop []
+      (let [graphite-ns (if graphite-ns graphite-ns (url->rev-host url) )              
+            validator (if validator (eval validator) #(constantly true))
+            start (System/currentTimeMillis)]
+      (private-fetch url method
+                     (assoc http-options
+                       :validator validator
+                       :graphite-ns graphite-ns
+                       :start start))
       (Thread/sleep interval)
       (recur))))
-
-
-
-;; Need an util function to print, log, and flush
-                    
-                    
-(defn lets-puts-some-stress [url pressure]
-  (let [last-repeat-time (atom (System/currentTimeMillis))
-        bytes-received (atom 0)
-        req-sent (atom 0)
-        options {:timeout 2000
-                 :user-agent "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1468.0 Safari/537.36" ;chrome
-                 :headers {"X-Header" "value"}
-                 :as :byte-array}]
-    (println "entering stress test loop")
-    (loop [sleep-interval 25
-           pressure-segment (/ pressure sleep-interval)]
-      (dotimes [_ pressure-segment]
-        (http/get url options
-                  (fn [{:keys [body error]}]
-                    (when-not error
-                      (swap! req-sent inc)
-                      (swap! bytes-received + (count body))
-                      ;; (printf "request success! req-sent: %d\n" @req-sent)
-                      ))))
-      (let [now (System/currentTimeMillis)]
-        (if (-> now
-                (- @last-repeat-time)
-                (> 1000))
-          (let [time (- now @last-repeat-time)
-                throughput (-> @bytes-received
-                               (/ time)
-                               (* 1000.)
-                               (/ 1024. 1024.))
-                req-per-second (-> @req-sent
-                                   (/ time)
-                                   (* 1000.))]
-            (printf "total requests %d, throughput: %.2fM/s, %.2f requests/seconds\n"
-                    @req-sent throughput req-per-second)
-            (reset! last-repeat-time now)
-            (reset! req-sent 0)
-            (reset! bytes-received 0)
-            (flush))))
-      (Thread/sleep sleep-interval)
-      (recur sleep-interval pressure-segment))))

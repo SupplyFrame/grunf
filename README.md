@@ -24,14 +24,12 @@ The command line options for grunf are:
 The configuration file format for `conf.example.clj` is
 
 ```clj
-[{:name "yahoo"
+[{
   :url "http://www.yahoo.com/"
-  :meta {:from "0.0.0.0"}
   :interval 1000
   :validator #(re-find #"yahoo" %)
   :http-options {:timeout 2000
                  :user-agent "Mozilla"}
-  :redirect True
   }]
 ```
 

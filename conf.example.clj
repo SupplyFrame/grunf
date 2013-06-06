@@ -10,11 +10,11 @@
 
 ;;   }]
 
-[{:name "yahoo"
-  :url "http://www.yahoo.com/"
+[{
+  :url "http://www.google.com"
   :meta {:from "0.0.0.0"}
-  :interval 1000
-  :validator #(re-find #"yahoo" %)
+  :interval 5000
+  :validator #(re-find #"google" %)
   :http-options {:timeout 2000
                  :user-agent "Mozilla"}
   :redirect True
