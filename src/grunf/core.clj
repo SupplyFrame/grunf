@@ -3,18 +3,13 @@
   (:require [org.httpkit.client :as http]
             [clojure.string :as str]
             [clojure.tools.logging :as log])
-  (:use [clojure.template :only [do-template]])
-        
+  (:use [clojure.template :only [do-template]])        
   (:import [java.net Socket]
            [java.io PrintWriter]))
 
-
+(declare private-fetch)
 
 (defn set-graphite! []) ;; set by main args
-
-
-(declare now to-sec write-graphite log-graphite private-fetch)
-
 
 (defmulti callback
   "dispatch fetch callbacks base on connection error or http status"
