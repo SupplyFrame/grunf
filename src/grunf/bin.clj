@@ -3,17 +3,15 @@
 
 (ns grunf.bin
   "grunf.main"
-  (:require [org.httpkit.client :as http]
-            [grunf.core :as grunf])
   (:use [clojure.tools.cli :only [cli]]
-        clj-logging-config.log4j)
-  (:import [org.apache.log4j DailyRollingFileAppender EnhancedPatternLayout])
+        clj-logging-config.log4j
+        grunf.core)
+  (:import [org.apache.log4j DailyRollingFileAppender EnhancedPatternLayout]
+           [grunf.core Log4j Graphite])
   (:gen-class))
 
 
-(def log-pattern
-  "Log4j pattern layout
-   See http://logging.apache.org/log4j/1.2/apidocs/org/apache/log4j/PatternLayout.html"
+(def log-pattern "Log4j pattern layout"
   "%d{ISO8601}{GMT} [%-5p] [%t] - %m%n")
 
 (def cli-options
@@ -21,6 +19,8 @@
   [["-c" "--config" "Path to the config file"]
    ["--log" "log path for log4j. If not specified, log to console"]
    ["--log-level" "log level for log4j, (fatal|error|warn|info|debug)" :default "debug"]
+   ["--graphite-host" "Graphite server host"]
+   ["--graphite-port" "Graphite server port" :default 2003 :parse-fn #(Integer. %)]
    ["-h" "--[no-]help" "Print this message" :default false]])
 
 (defn- verify-config [config-array]
@@ -34,10 +34,31 @@
             "Must have :url in config map"))
   config-array)
 
+(defmacro ->>split
+  "Thread last friendly split"
+  [sep form]
+  `(clojure.string/split ~form ~sep))
+
+(defn- url->rev-host
+  "Resove host, than reverse the order
+   http://www.yahoo.com/search.html -> com.yahoo.www"
+  [url]
+  (->> url
+       (re-find #"(?<=://).+?(?=/|$)")
+       (->>split #"\.")
+       (reverse)
+       (clojure.string/join ".")))
+
 
 (defn -main [& argv]
-  (let [[options args banner]
-        (apply cli argv cli-options)]
+  (let [[options args banner] (apply cli argv cli-options)
+        log4j (Log4j. "grunf.core" (-> options :log-level keyword) log-pattern
+                       (if (:log options)
+                         (DailyRollingFileAppender.
+                          (EnhancedPatternLayout. log-pattern)
+                          (:log options)
+                          "'.'yyyy-MM-dd")
+                         :console))]
     (when (:help options)
       (println
        "Example:
@@ -46,16 +67,13 @@ lein run < conf.example.clj # Can also read config from stdin
 lein trampoline run --log logs/foo.log -c conf.example.clj & tail -f logs/foo.log")
       (println banner)
       (System/exit 0))
-    (set-loggers! "grunf.core"
-                  {:level (-> options :log-level keyword)
-                   :pattern log-pattern
-                   :out
-                   (if (:log options)
-                     (DailyRollingFileAppender. (EnhancedPatternLayout. log-pattern)
-                                                (:log options)
-                                                "'.'yyyy-MM-dd")
-                     :console)})
-    (pmap grunf/fetch
+    (init-logger log4j)
+    (pmap #(fetch % (filter identity
+                            [log4j
+                             (if (:graphite-host options)
+                                 (Graphite. (or (:graphite-ns %) (url->rev-host (:url %)))
+                                            (:graphite-host options)
+                                            (:graphite-port options)))]))
           (try
             (->> (or (:config options) *in*)
                  (slurp)
@@ -69,4 +87,5 @@ lein trampoline run --log logs/foo.log -c conf.example.clj & tail -f logs/foo.lo
               (System/exit -1))
             (catch Exception e
               (println "Config file error" e)
-              (System/exit -1))))))
+              (System/exit -1))))
+    ))

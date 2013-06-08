@@ -26,6 +26,8 @@ Usage:
  -c, --config                    Path to the config file
  --log                           log path for log4j. If not specified, log to console 
  --log-level            debug    log level for log4j, (fatal|error|warn|info|debug)
+ --graphite-host                 Graphite server host
+ --graphite-port        2003     Graphite server port
  -h, --no-help, --help  false    Print this message
 ```
 
