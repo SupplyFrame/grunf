@@ -3,98 +3,115 @@
   (:require [org.httpkit.client :as http]
             [clojure.string :as str]
             [clojure.tools.logging :as log])
-  (:use [clojure.template :only [do-template]])        
+  (:use [clojure.template :only [do-template]]
+        clj-logging-config.log4j)        
   (:import [java.net Socket]
            [java.io PrintWriter]))
 
 (declare private-fetch)
 
-(defn set-graphite! []) ;; set by main args
+(defprotocol GrunfOutputAdapter
+  "A protocol for grunf instance to log or push data to other service"
+  (log-success [this] "http 2xx status")
+  (log-redirect [this] "http 3xx status")
+  (log-client-error [this] "http 4xx status")
+  (log-server-error [this] "http 5xx status")
+  (log-unknown-error [this] "link error or unknown status code"))
 
-(defmulti callback
-  "dispatch fetch callbacks base on connection error or http status"
-  (fn [{:keys [status error]}]
-    (if error :error
-        (case (quot status 100)
-          2 :success
-          3 :redirect
-          :error))))
+(defprotocol SetupLog4j
+  "A protocol that Log4j needed"
+  (init-logger [this] "runs set-loggers!"))
 
-(defmethod callback :error [{:keys [error status opts headers]}]
-  (log/error status (:url opts) error headers)
-  (binding [*out* (-> (Socket. "localhost" 2003)
-                      (.getOutputStream)
-                      (PrintWriter.))]
-    (println (str (:graphite-ns opts) ".error") 1 (-> (:start opts) (/ 1000) (int)))))
+(defmacro with-log4j [this & body] ;; It should create custom namespace
+  `(with-logging-config
+     [(.namespace ~this) {:level (.level ~this)}]
+     ~@body))
 
-(defmethod callback :success [{:keys [status body opts]}]
-  (log/info status (:url opts))
-  (when-not ((:validator opts) body) (log/error status (:url opts) "-- validate failed"))
-  (binding [*out* (-> (Socket. "localhost" 2003)
-                      (.getOutputStream)
-                      (PrintWriter.))]
-    (do-template
-     [type value]
-     (println (str (:graphite-ns opts) "." type)
-              value
-              (-> (:start opts) (/ 1000) (int)))
-     "response_time" (- (System/currentTimeMillis) (:start opts))
-     "response_size" (count (map int body))
-     "error" (if ((:validator opts) body) 0 1))))
+;; continuation passing style
+(deftype Log4j [namespace level pattern out]
+  SetupLog4j
+  (init-logger [this]
+    (set-loggers! (.namespace this)
+                  {:level (.level this)
+                   :pattern (.pattern this)
+                   :out (.out this)}))
+  GrunfOutputAdapter
+  (log-success [this]
+    (fn [{{validator :validate url :url} :opts
+          status :status
+          body :body}]
+      (with-log4j this
+        (log/info status url)
+        ;; (when-not (validator body) (log/error status url "-- validate failed"))
+        )))
+  (log-redirect [this]
+    (fn [{{old-url :url} :opts
+          {new-url :location} :headers
+          status :status}]
+     (with-log4j this
+        (log/info status "redirect" old-url "->" new-url))))
+  (log-client-error [this] (log-unknown-error this))
+  (log-server-error [this] (log-unknown-error this))
+  (log-unknown-error [this]
+    (fn [{error :error
+          status :status
+          headers :headers
+          {url :url} :opts}]
+      (with-log4j this
+        (log/error status url error headers)))))
 
-(defmethod callback :redirect [{:keys [status headers opts]}]
-  (log/info status "redirect" (:url opts) "->" (:location headers))
-  (private-fetch (:location headers) (:method opts) opts))
+(deftype Graphite [namespace host port]
+  GrunfOutputAdapter
+  (log-success [this]
+    (fn [{{validator :validator start :start} :opts
+          body :body}]
+      (binding [*out* (-> (Socket. (.host this) (.port this))
+                          (.getOutputStream)
+                          (PrintWriter.))]
+        (do-template [type value]
+                     (println (str (.namespace this) "." type)
+                              value
+                              (-> start (/ 1000) (int)))
+                     "response_time" (- (System/currentTimeMillis) start)
+                     "response_size" (count (map int body))
+                     "error" (if (validator body) 0 1)))))
+  (log-redirect [this] (fn [_]))
+  (log-client-error [this] (log-unknown-error this))
+  (log-server-error [this] (log-unknown-error this))
+  (log-unknown-error [this]
+    (fn [{{start :start} :opts}]
+      (binding [*out* (-> (Socket. (.host this) (.port this))
+                          (.getOutputStream)
+                          (PrintWriter.))]
+        (println (str (.namespace this) ".error") 1 start)))))
 
-
-
-;; names need to be refactored
-(defn- private-fetch [url method http-options]
-  ((case method
-     :get http/get
-     :post http/post
-     :put http/put
-     :delete http/delete) url http-options callback))
-
-(defmacro ->>split
-  "Thread last friendly split"
-  [sep form]
-  `(clojure.string/split ~form ~sep))
-
-(defn- url->rev-host
-  "Resove host, than reverse the order
-   http://www.yahoo.com/search.html -> com.yahoo.www"
-  [url]
-  (->> url
-       (re-find #"(?<=://).+?(?=/|$)")
-       (->>split #"\.")
-       (reverse)
-       (str/join ".")))
-
-
-;; predicate instead of validator?
-
-;; Refactoring note:
-;; fetch should be testable; instead of making an infinite loop,
-;; It should be called by an infinite loop
-
-(defn fetch
-  "not documented yet"
-  [{:keys [url interval method http-options validator graphite-ns]
-    :or {interval 5000,
-         method :get,
-         http-options {},
-         validator nil,
-         graphite-ns ""}}]
-    (loop []
-      (let [graphite-ns (or graphite-ns (url->rev-host url))              
-            validator (if validator (eval validator) (constantly true))
-            start (System/currentTimeMillis)]
-      (private-fetch url method
-                     (assoc http-options
-                       :validator validator
-                       :graphite-ns graphite-ns
-                       :start start
-                       :as :text))
+(defn fetch [{:keys [url interval method http-options validator graphite-ns]
+              :or {interval 5000,
+                   method :get,
+                   validator '(constantly true)
+                   graphite-ns ""}}
+             adapters]
+  (letfn [(http-method [method]
+            (case method
+              :get http/get
+              :post http/post
+              :put http/put
+              :delete http/delete))
+          (callback [{:keys [error status opts] :as context}]
+            (if error
+              ((apply juxt (map log-unknown-error adapters)) context)
+              (case (quot status 100)
+                2 ((apply juxt (map log-success adapters)) context)
+                3 (do ((apply juxt (map log-redirect adapters)) context)
+                      ((http-method method)
+                       (-> context :headers :location) opts callback))
+                4 ((apply juxt (map log-client-error adapters)) context)
+                5 ((apply juxt (map log-server-error adapters)) context)
+                ((apply juxt (map log-unknown-error adapters)) context))))]
+    (loop [start (System/currentTimeMillis)]
+      ((http-method method) url (assoc http-options
+                                  :validator (eval validator)
+                                  :as :text
+                                  :start start) callback)
       (Thread/sleep interval)
-      (recur))))
+      (recur (System/currentTimeMillis)))))
