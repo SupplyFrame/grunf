@@ -11,10 +11,10 @@
   (:gen-class))
 
 
-(def log-pattern "Log4j pattern layout"
+(def- log-pattern "Log4j pattern layout"
   "%d{ISO8601}{GMT} [%-5p] [%t] - %m%n")
 
-(def cli-options
+(def- cli-options
   "Grunf command line options"
   [["-c" "--config" "Path to the config file"]
    ["--log" "log path for log4j. If not specified, log to console"]
@@ -34,21 +34,15 @@
             "Must have :url in config map"))
   config-array)
 
-(defmacro ->>split
-  "Thread last friendly split"
-  [sep form]
-  `(clojure.string/split ~form ~sep))
-
 (defn- url->rev-host
   "Resove host, than reverse the order
    http://www.yahoo.com/search.html -> com.yahoo.www"
   [url]
   (->> url
        (re-find #"(?<=://).+?(?=/|$)")
-       (->>split #"\.")
+       (.split #"\.")
        (reverse)
        (clojure.string/join ".")))
-
 
 (defn -main [& argv]
   (let [[options args banner] (apply cli argv cli-options)
