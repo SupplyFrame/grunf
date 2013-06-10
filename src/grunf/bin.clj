@@ -5,9 +5,12 @@
   "grunf.main"
   (:use [clojure.tools.cli :only [cli]]
         clj-logging-config.log4j
-        grunf.core)
+        grunf.core
+        grunf.adapter.log4j
+        grunf.adapter.graphite)
   (:import [org.apache.log4j DailyRollingFileAppender EnhancedPatternLayout]
-           [grunf.core Log4j Graphite])
+           [grunf.adapter.log4j Log4j]
+           [grunf.adapter.graphite Graphite])
   (:gen-class))
 
 
@@ -46,7 +49,8 @@
 
 (defn -main [& argv]
   (let [[options args banner] (apply cli argv cli-options)
-        log4j (Log4j. "grunf.core" (-> options :log-level keyword) log-pattern
+        log4j (Log4j. "grunf.adapter.log4j"
+                      (-> options :log-level keyword) log-pattern
                        (if (:log options)
                          (DailyRollingFileAppender.
                           (EnhancedPatternLayout. log-pattern)
