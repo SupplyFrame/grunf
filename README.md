@@ -1,4 +1,4 @@
-# grunf
+# grunf 0.2.6 (Alpha)
 
 (simple clojure-based http monitoring tool)
 
@@ -44,6 +44,10 @@ The configuration file format for `conf.example.clj` is
   {:url "http://www.google.com"}      ;; only url is required
 ]
 ```
+
+## Note
+
+This tool is still in experimental status, but all the example configs should work just fine.
 
 ## TODO
 

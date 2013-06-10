@@ -16,6 +16,7 @@
   (log-redirect [this] "http 3xx status")
   (log-client-error [this] "http 4xx status")
   (log-server-error [this] "http 5xx status")
+  (log-validate-error [this] "validation failed")
   (log-unknown-error [this] "link error or unknown status code"))
 
 (defprotocol SetupLog4j
@@ -41,20 +42,19 @@
           status :status
           body :body}]
       (log/info status url
-                  "response time (msec):" (- (System/currentTimeMillis) start))
-        (when-not (validator body)
-          (log/error status url "-- validate failed"))
-      ;; (with-log4j this
-      ;;   )
-      ))
+                "response time (msec):" (- (System/currentTimeMillis) start))))
+  (log-validate-error [this]
+    (fn [{{validator :validator url :url start :start} :opts
+          status :status
+          body :body}]
+      (log/error status url
+                 "response time (msec):" (- (System/currentTimeMillis) start)
+                 "-- validate failed")))
   (log-redirect [this]
     (fn [{{old-url :url} :opts
           {new-url :location} :headers
           status :status}]
-      (log/info status "redirect" old-url "->" new-url)
-     ;; (with-log4j this
-     ;;    )
-     ))
+      (log/info status "redirect" old-url "->" new-url)))
   (log-client-error [this] (log-unknown-error this))
   (log-server-error [this] (log-unknown-error this))
   (log-unknown-error [this]
@@ -62,15 +62,12 @@
           status :status
           headers :headers
           {url :url} :opts}]
-      (log/error status url error headers)
-      ;; (with-log4j this
-      ;;   )
-      )))
+      (log/error status url error headers))))
 
 (deftype Graphite [namespace host port]
   GrunfOutputAdapter
   (log-success [this]
-    (fn [{{validator :validator start :start} :opts
+    (fn [{{start :start} :opts
           body :body}]
       (binding [*out* (-> (Socket. (.host this) (.port this))
                           (.getOutputStream)
@@ -81,7 +78,15 @@
                               (-> start (/ 1000) (int)))
                      "response_time" (- (System/currentTimeMillis) start)
                      "response_size" (count (map int body))
-                     "error" (if (validator body) 0 1)))))
+                     "error" 0
+                     ))))
+  (log-validate-error [this]
+    (fn [{{start :start} :opts
+          body :body}]
+      (binding [*out* (-> (Socket. (.host this) (.port this))
+                          (.getOutputStream)
+                          (PrintWriter.))]
+        (println (str (.namespace this) ".error") 1 (-> start (/ 1000) (int))))))
   (log-redirect [this] (fn [_]))
   (log-client-error [this] (log-unknown-error this))
   (log-server-error [this] (log-unknown-error this))
@@ -92,29 +97,41 @@
                           (PrintWriter.))]
         (println (str (.namespace this) ".error") 1 start)))))
 
+(defn- http-method
+  "take http-method names and return actual instance"
+  [method]
+  (case method
+    :get http/get
+    :post http/post
+    :put http/put
+    :delete http/delete))
+
 (defn fetch [{:keys [url interval method http-options validator graphite-ns]
               :or {interval 5000,
                    method :get,
                    validator '(constantly true)
                    graphite-ns ""}}
              adapters]
-  (letfn [(http-method [method]
-            (case method
-              :get http/get
-              :post http/post
-              :put http/put
-              :delete http/delete))
-          (callback [{:keys [error status opts] :as context}]
-            (if error
-              ((apply juxt (map log-unknown-error adapters)) context)
-              (case (quot status 100)
-                2 ((apply juxt (map log-success adapters)) context)
-                3 (do ((apply juxt (map log-redirect adapters)) context)
-                      ((http-method method)
-                       (-> context :headers :location) opts callback))
-                4 ((apply juxt (map log-client-error adapters)) context)
-                5 ((apply juxt (map log-server-error adapters)) context)
-                ((apply juxt (map log-unknown-error adapters)) context))))]
+  (letfn
+      [(callback
+         [{:keys [error status body opts] :as context}]
+         (let [log-wrapper (fn [f] ((apply juxt (map f adapters)) context))]
+           (if error
+             (log-wrapper log-unknown-error)
+             (case (quot status 100)
+               2 (if-let [v (:validator opts)]
+                   (try (if (v body)
+                          (log-wrapper log-success)
+                          (log-wrapper log-validate-error))
+                        (catch Exception e
+                          (log-wrapper log-validate-error)))
+                   (log-wrapper log-success))
+               3 (do (log-wrapper log-redirect)
+                     ((http-method method)
+                      (-> context :headers :location) opts callback))
+               4 (log-wrapper log-client-error)
+               5 (log-wrapper log-server-error)
+               (log-wrapper log-unknown-error)))))]
     (loop [start (System/currentTimeMillis)]
       ((http-method method) url (assoc http-options
                                   :validator (eval validator)
