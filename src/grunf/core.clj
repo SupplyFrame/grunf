@@ -37,19 +37,24 @@
                    :out (.out this)}))
   GrunfOutputAdapter
   (log-success [this]
-    (fn [{{validator :validate url :url} :opts
+    (fn [{{validator :validator url :url start :start} :opts
           status :status
           body :body}]
-      (with-log4j this
-        (log/info status url)
-        ;; (when-not (validator body) (log/error status url "-- validate failed"))
-        )))
+      (log/info status url
+                  "response time (msec):" (- (System/currentTimeMillis) start))
+        (when-not (validator body)
+          (log/error status url "-- validate failed"))
+      ;; (with-log4j this
+      ;;   )
+      ))
   (log-redirect [this]
     (fn [{{old-url :url} :opts
           {new-url :location} :headers
           status :status}]
-     (with-log4j this
-        (log/info status "redirect" old-url "->" new-url))))
+      (log/info status "redirect" old-url "->" new-url)
+     ;; (with-log4j this
+     ;;    )
+     ))
   (log-client-error [this] (log-unknown-error this))
   (log-server-error [this] (log-unknown-error this))
   (log-unknown-error [this]
@@ -57,8 +62,10 @@
           status :status
           headers :headers
           {url :url} :opts}]
-      (with-log4j this
-        (log/error status url error headers)))))
+      (log/error status url error headers)
+      ;; (with-log4j this
+      ;;   )
+      )))
 
 (deftype Graphite [namespace host port]
   GrunfOutputAdapter
