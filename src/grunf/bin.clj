@@ -59,39 +59,49 @@ lein run -c conf.example.clj -s smtp.example.clj")
        (reverse)
        (clojure.string/join ".")))
 
+(defn- create-log4j [options]
+  (Log4j. "grunf.adapter.log4j"
+          (-> options :log-level keyword) log-pattern
+          (if (:log options)
+            (DailyRollingFileAppender.
+             (EnhancedPatternLayout. log-pattern)
+             (:log options)
+             "'.'yyyy-MM-dd")
+            :console)))
+
+(defn- create-graphite [options]
+  )
+
+(defn- create-smtp [options]
+  (if-let [smtp-file (:smtp-config options)]
+    (try (-> smtp-file
+             (slurp)
+             (read-string)
+             (Mail. (:hostname options)))
+         (catch java.io.IOException e
+           (println "smtp config file not found")
+           (System/exit -1))
+         (catch Exception e
+           (println "read smtp-config file failed")
+           (System/exit -1)))))
+
 (defn -main [& argv]
   (let [[options args banner] (apply cli argv cli-options)
-        log4j (Log4j. "grunf.adapter.log4j"
-                      (-> options :log-level keyword) log-pattern
-                       (if (:log options)
-                         (DailyRollingFileAppender.
-                          (EnhancedPatternLayout. log-pattern)
-                          (:log options)
-                          "'.'yyyy-MM-dd")
-                         :console))]
+        log4j (create-log4j options)
+        smtp (create-smtp options)]
     (when (:help options)
       (println default-usage)
       (println banner)
       (System/exit 0))
     (init-logger log4j)
-    (pmap #(fetch %
-                  (filter identity
-                          [log4j
-                           (if (:graphite-host options)
-                             (Graphite. (or (:graphite-ns %) (url->rev-host (:url %)))
-                                        (:graphite-host options)
-                                        (:graphite-port options)))
-                           (if-let [smtp-file (:smtp-config options)]
-                             (try (-> smtp-file
-                                      (slurp)
-                                      (read-string)
-                                      (Mail. (:hostname options)))
-                                  (catch java.io.IOException e
-                                    (println "smtp config file not found")
-                                    (System/exit -1))
-                                  (catch Exception e
-                                    (println "read smtp-config file failed")
-                                    (System/exit -1))))]))
+    (pmap #(fetch % (filter identity
+                            [log4j
+                             smtp
+                             (if (:graphite-host options)
+                               (Graphite. (or (:graphite-ns %) (url->rev-host (:url %)))
+                                          (:graphite-host options)
+                                          (:graphite-port options)))
+                             ]))
           (try
             (->> (or (:config options) *in*)
                  (slurp)
