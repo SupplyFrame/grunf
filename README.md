@@ -14,6 +14,8 @@ lein run < conf.example.clj # Can also read config from stdin
 mkdir logs
 lein trampoline run --log logs/foo.log -c conf.example.clj &
 tail -f logs/foo.log
+#or
+lein run -c conf.example.clj -s smtp.example.clj
 ```
 
 The command line options for grunf are:
@@ -28,6 +30,8 @@ Usage:
  --log-level            debug    log level for log4j, (fatal|error|warn|info|debug)
  --graphite-host                 Graphite server host
  --graphite-port        2003     Graphite server port
+ --hostname             127.0.0.1  This server's hostname
+ -s, --smtp-config                 Path to smtp config file 
  -h, --no-help, --help  false    Print this message
 ```
 
@@ -45,6 +49,24 @@ The configuration file format for `conf.example.clj` is
 ]
 ```
 
+The smtp configuration file for `smtp.example.clj` is
+
+```clj
+;; Check the API on https://github.com/drewr/postal
+
+^{:host "smtp.gmail.com"
+  :user "example@gmail.com"
+  :pass "password"
+  :port 1234
+  :tls true
+  }
+{:from "sysalerts@example.com"
+ :to ["user1@gmail.com" "user2@gmail.com"]
+ :subject "Will be overwirtten by grunf!"
+ :body "Will be overwritten by grunf!"
+ }
+```
+
 ## Note
 
 This tool is still in experimental status, but all the example configs should work just fine.
@@ -54,6 +76,10 @@ This tool is still in experimental status, but all the example configs should wo
 1. Write tutorial of using grunf with graphite
 
 2. Refactor to make it testable (and more funtional idomatic).
+
+3. Handle smtp error and print error messages
+
+4. More options for global config
 
 ## License
 

@@ -56,4 +56,6 @@ tramp
 .org-id-locations
 *_archivelogs
 
+smtp-local.clj
+
 logs

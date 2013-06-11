@@ -5,9 +5,14 @@
   "grunf.main"
   (:use [clojure.tools.cli :only [cli]]
         clj-logging-config.log4j
-        grunf.core)
+        grunf.core
+        grunf.adapter.log4j
+        grunf.adapter.graphite
+        grunf.adapter.postal)
   (:import [org.apache.log4j DailyRollingFileAppender EnhancedPatternLayout]
-           [grunf.core Log4j Graphite])
+           [grunf.adapter.log4j Log4j]
+           [grunf.adapter.graphite Graphite]
+           [grunf.adapter.postal Mail])
   (:gen-class))
 
 
@@ -21,7 +26,17 @@
    ["--log-level" "log level for log4j, (fatal|error|warn|info|debug)" :default "debug"]
    ["--graphite-host" "Graphite server host"]
    ["--graphite-port" "Graphite server port" :default 2003 :parse-fn #(Integer. %)]
+   ["--hostname" "This server's hostname" :default "127.0.0.1"]
+   ["-s" "--smtp-config" "Path to smtp config file"]
    ["-h" "--[no-]help" "Print this message" :default false]])
+
+(def default-usage
+  "Example:
+lein run --log-level info --config conf.example.clj
+lein run < conf.example.clj # Can also read config from stdin
+lein trampoline run --log logs/foo.log -c conf.example.clj & tail -f logs/foo.log
+# SMTP example:
+lein run -c conf.example.clj -s smtp.example.clj")
 
 (defn- verify-config [config-array]
   "Verify grunf config file using assertion and exception handling"
@@ -44,30 +59,49 @@
        (reverse)
        (clojure.string/join ".")))
 
+(defn- create-log4j [options]
+  (Log4j. "grunf.adapter.log4j"
+          (-> options :log-level keyword) log-pattern
+          (if (:log options)
+            (DailyRollingFileAppender.
+             (EnhancedPatternLayout. log-pattern)
+             (:log options)
+             "'.'yyyy-MM-dd")
+            :console)))
+
+(defn- create-graphite [options]
+  )
+
+(defn- create-smtp [options]
+  (if-let [smtp-file (:smtp-config options)]
+    (try (-> smtp-file
+             (slurp)
+             (read-string)
+             (Mail. (:hostname options)))
+         (catch java.io.IOException e
+           (println "smtp config file not found")
+           (System/exit -1))
+         (catch Exception e
+           (println "read smtp-config file failed")
+           (System/exit -1)))))
+
 (defn -main [& argv]
   (let [[options args banner] (apply cli argv cli-options)
-        log4j (Log4j. "grunf.core" (-> options :log-level keyword) log-pattern
-                       (if (:log options)
-                         (DailyRollingFileAppender.
-                          (EnhancedPatternLayout. log-pattern)
-                          (:log options)
-                          "'.'yyyy-MM-dd")
-                         :console))]
+        log4j (create-log4j options)
+        smtp (create-smtp options)]
     (when (:help options)
-      (println
-       "Example:
-lein run --log-level info --config conf.example.clj
-lein run < conf.example.clj # Can also read config from stdin
-lein trampoline run --log logs/foo.log -c conf.example.clj & tail -f logs/foo.log")
+      (println default-usage)
       (println banner)
       (System/exit 0))
     (init-logger log4j)
     (pmap #(fetch % (filter identity
                             [log4j
+                             smtp
                              (if (:graphite-host options)
-                                 (Graphite. (or (:graphite-ns %) (url->rev-host (:url %)))
-                                            (:graphite-host options)
-                                            (:graphite-port options)))]))
+                               (Graphite. (or (:graphite-ns %) (url->rev-host (:url %)))
+                                          (:graphite-host options)
+                                          (:graphite-port options)))
+                             ]))
           (try
             (->> (or (:config options) *in*)
                  (slurp)
