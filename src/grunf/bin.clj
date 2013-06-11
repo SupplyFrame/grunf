@@ -8,11 +8,13 @@
         grunf.core
         grunf.adapter.log4j
         grunf.adapter.graphite
-        grunf.adapter.postal)
+        grunf.adapter.postal
+        grunf.adapter.csv)
   (:import [org.apache.log4j DailyRollingFileAppender EnhancedPatternLayout]
            [grunf.adapter.log4j Log4j]
            [grunf.adapter.graphite Graphite]
-           [grunf.adapter.postal Mail])
+           [grunf.adapter.postal Mail]
+           [grunf.adapter.csv CSV])
   (:gen-class))
 
 
@@ -27,16 +29,19 @@
    ["--graphite-host" "Graphite server host"]
    ["--graphite-port" "Graphite server port" :default 2003 :parse-fn #(Integer. %)]
    ["--hostname" "This server's hostname" :default "127.0.0.1"]
+   ["--csv" "csv log path"]
    ["-s" "--smtp-config" "Path to smtp config file"]
    ["-h" "--[no-]help" "Print this message" :default false]])
 
 (def default-usage
   "Example:
-lein run --log-level info --config conf.example.clj
+lein run --log-level info --config conf.example.clj 
 lein run < conf.example.clj # Can also read config from stdin
 lein trampoline run --log logs/foo.log -c conf.example.clj & tail -f logs/foo.log
 # SMTP example:
-lein run -c conf.example.clj -s smtp.example.clj")
+lein run -c conf.example.clj -s smtp.example.clj
+# CSV output example
+lein run -c conf.example.clj --csv logs/bar.csv")
 
 (defn- verify-config [config-array]
   "Verify grunf config file using assertion and exception handling"
@@ -95,11 +100,17 @@ lein run -c conf.example.clj -s smtp.example.clj")
       (System/exit 0))
     (init-logger log4j)
     (set-loggers! "grunf.adapter.postal" ;; quick hack
-                  {
-                   :pattern log-pattern})
+                  {:pattern log-pattern})
+    (set-loggers! "grunf.adapter.csv"
+                  {:out
+                   (DailyRollingFileAppender.
+                    (EnhancedPatternLayout. "%d{ABSOLUTE}, [%-5p], %m%n")
+                    (:csv options)
+                    "'.'yyyy-MM-dd")})
     (pmap #(fetch % (filter identity
                             [log4j
                              smtp
+                             (CSV.)
                              (if (:graphite-host options)
                                (Graphite. (or (:graphite-ns %) (url->rev-host (:url %)))
                                           (:graphite-host options)
