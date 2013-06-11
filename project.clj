@@ -12,4 +12,5 @@
                  [http-kit "2.1.2"]
                  [org.clojure/tools.cli "0.2.2"]
                  [org.clojure/clojure "1.5.1"]
+                 [clojail "1.0.6"]
                  ])

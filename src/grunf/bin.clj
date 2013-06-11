@@ -94,6 +94,9 @@ lein run -c conf.example.clj -s smtp.example.clj")
       (println banner)
       (System/exit 0))
     (init-logger log4j)
+    (set-loggers! "grunf.adapter.postal" ;; quick hack
+                  {
+                   :pattern log-pattern})
     (pmap #(fetch % (filter identity
                             [log4j
                              smtp
