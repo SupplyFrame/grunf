@@ -1,22 +1,38 @@
-# grunf 0.2.6 (Alpha)
+# grunf 0.2.7 (Alpha)
 
 (simple clojure-based http monitoring tool)
 
 ## Usage
 
-Type these commands:
-
+read config file and log in concole
 ```
 lein run --log-level info --config conf.example.clj
-# or
-lein run < conf.example.clj # Can also read config from stdin
-# or
+```
+
+Can also read config from stdin
+```
+lein run < conf.example.clj
+```
+
+Log in file `logs/foo.log`. Note `lein trampoline` let you send lein process to background without pausing the program.
+
+```
 mkdir logs
 lein trampoline run --log logs/foo.log -c conf.example.clj &
 tail -f logs/foo.log
-#or
+```
+
+Read smtp config, will send mails when receive error
+```
 lein run -c conf.example.clj -s smtp.example.clj
 ```
+
+export csv in logs/bar.csv
+```
+lein run -c conf.example.clj --csv logs/bar.csv
+```
+
+## Command line options
 
 The command line options for grunf are:
 
@@ -31,9 +47,12 @@ Usage:
  --graphite-host                 Graphite server host
  --graphite-port        2003     Graphite server port
  --hostname             127.0.0.1  This server's hostname
+ --csv                             csv log path
  -s, --smtp-config                 Path to smtp config file 
  -h, --no-help, --help  false    Print this message
 ```
+
+## Configuration files format
 
 The configuration file format for `conf.example.clj` is
 
@@ -52,8 +71,6 @@ The configuration file format for `conf.example.clj` is
 The smtp configuration file for `smtp.example.clj` is
 
 ```clj
-;; Check the API on https://github.com/drewr/postal
-
 ^{:host "smtp.gmail.com"
   :user "example@gmail.com"
   :pass "password"
@@ -67,6 +84,18 @@ The smtp configuration file for `smtp.example.clj` is
  }
 ```
 
+For full documentaion of SMTP setup, please visit [postal -- internet email library for clojure](https://github.com/drewr/postal).
+
+## Output format
+
+### CSV
+
+The CSV fields are
+
+```
+HH:MM:ss,SSS, *log type*, *http status*, *url*, *response time (milliseconds)*
+```
+
 ## Note
 
 This tool is still in experimental status, but all the example configs should work just fine.
@@ -77,9 +106,7 @@ This tool is still in experimental status, but all the example configs should wo
 
 2. Refactor to make it testable (and more funtional idomatic).
 
-3. Handle smtp error and print error messages
-
-4. More options for global config
+3. More options for global config
 
 ## License
 

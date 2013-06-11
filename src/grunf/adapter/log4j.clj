@@ -29,13 +29,13 @@
     (fn [{{v-source :validator-source validator :validator url :url start :start} :opts
           status :status
           body :body}]
-      (log/info status "," url ","
+      (log/info status url
                 "response time (msec):" (- (System/currentTimeMillis) start))))
   (log-validate-error [this]
     (fn [{{v-source :validator-source validator :validator url :url start :start} :opts
           status :status
           body :body}]
-      (log/error status "," url ","
+      (log/error status url
                  "response time (msec):" (- (System/currentTimeMillis) start) ","
                  "-- validate failed -- validator:" v-source)))
   (log-redirect [this]
