@@ -26,18 +26,18 @@
                    :out (.out this)}))
   GrunfOutputAdapter
   (log-success [this]
-    (fn [{{validator :validator url :url start :start} :opts
+    (fn [{{v-source :validator-source validator :validator url :url start :start} :opts
           status :status
           body :body}]
-      (log/info status url
+      (log/info status "," url ","
                 "response time (msec):" (- (System/currentTimeMillis) start))))
   (log-validate-error [this]
-    (fn [{{validator :validator url :url start :start} :opts
+    (fn [{{v-source :validator-source validator :validator url :url start :start} :opts
           status :status
           body :body}]
-      (log/error status url
-                 "response time (msec):" (- (System/currentTimeMillis) start)
-                 "-- validate failed")))
+      (log/error status "," url ","
+                 "response time (msec):" (- (System/currentTimeMillis) start) ","
+                 "-- validate failed -- validator:" v-source)))
   (log-redirect [this]
     (fn [{{old-url :url} :opts
           {new-url :location} :headers

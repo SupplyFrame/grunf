@@ -48,7 +48,10 @@
                (log-wrapper log-unknown-error)))))]
     (loop [start (System/currentTimeMillis)]
       ((http-method method) url (assoc http-options
+                                  :timeout 60000
+                                  :user-agent "Grunf"
                                   :validator (eval validator)
+                                  :validator-source validator
                                   :as :text
                                   :start start) callback)
       (Thread/sleep interval)
