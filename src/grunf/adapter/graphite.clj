@@ -37,4 +37,4 @@
       (binding [*out* (-> (Socket. (.host this) (.port this))
                           (.getOutputStream)
                           (PrintWriter.))]
-        (println (str (.namespace this) ".error") 1 start)))))
+        (println (str (.namespace this) ".error") 1 (-> start (/1000) (int)))))))
