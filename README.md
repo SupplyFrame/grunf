@@ -1,4 +1,4 @@
-# grunf 0.2.8 (Alpha)
+# grunf 0.2.9 (Alpha)
 
 (simple clojure-based http monitoring tool)
 
@@ -67,7 +67,11 @@ The configuration file format for `conf.example.clj` is
                  :user-agent "Mozilla"}
   :graphite-ns "com.yahoo.www"        ;; defualt to reverse domain name
   }
-  {:url "http://www.google.com"}      ;; only url is required
+  {:url "http://www.google.com/?search=abc"
+   :name "search"                     ;; append to graphite namespace
+                                      ;; in this case it would be
+                                      ;; "com.google.www.search"
+  }      ;; only url is required
 ]
 ```
 

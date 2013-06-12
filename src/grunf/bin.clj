@@ -113,12 +113,16 @@ lein run -c conf.example.clj --csv logs/bar.csv")
                       "'.'yyyy-MM-dd")}))
     (map
      (fn [{url :url
-                graphite-ns :graphite-ns
-                interval :interval
-                http-options :http-options :as task}
-               ]
-       (let [graphite (if (:graphite-host options)
-                        (Graphite. (or graphite-ns (url->rev-host url))
+           graphite-ns :graphite-ns
+           interval :interval
+           name :name
+           http-options :http-options :as task}
+          ]
+       (let [graphite-ns (cond graphite-ns graphite-ns
+                               name (str (url->rev-host url) "." name)
+                               :else (url->rev-host url))
+             graphite (if (:graphite-host options)
+                        (Graphite. graphite-ns
                                    (:graphite-host options)
                                    (:graphite-port options)))
              default-http-options {:timeout (:timeout options)
