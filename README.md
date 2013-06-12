@@ -1,4 +1,4 @@
-# grunf 0.2.7 (Alpha)
+# grunf 0.2.8 (Alpha)
 
 (simple clojure-based http monitoring tool)
 
@@ -48,6 +48,9 @@ Usage:
  --graphite-port        2003     Graphite server port
  --hostname             127.0.0.1  This server's hostname
  --csv                             csv log path
+ --interval             60000      Default interval for each url request
+ --user-agent           Grunf      Default user agent string
+ --timeout              6000       Default timeout per request
  -s, --smtp-config                 Path to smtp config file 
  -h, --no-help, --help  false    Print this message
 ```
