@@ -30,6 +30,9 @@
    ["--graphite-port" "Graphite server port" :default 2003 :parse-fn #(Integer. %)]
    ["--hostname" "This server's hostname" :default "127.0.0.1"]
    ["--csv" "csv log path"]
+   ["--interval" "Default interval for each url request" :default 60000 :parse-fn #(Integer. %)]
+   ["--user-agent" "Default user agent string" :default "Grunf"]
+   ["--timeout" "Default timeout per request" :default 6000 :parse-fn #(Integer. %)]
    ["-s" "--smtp-config" "Path to smtp config file"]
    ["-h" "--[no-]help" "Print this message" :default false]])
 
@@ -101,33 +104,45 @@ lein run -c conf.example.clj --csv logs/bar.csv")
     (init-logger log4j)
     (set-loggers! "grunf.adapter.postal" ;; quick hack
                   {:pattern log-pattern})
-    (set-loggers! "grunf.adapter.csv"
-                  {:out
-                   (DailyRollingFileAppender.
-                    (EnhancedPatternLayout. "%d{ABSOLUTE}, [%-5p], %m%n")
-                    (:csv options)
-                    "'.'yyyy-MM-dd")})
-    (pmap #(fetch % (filter identity
-                            [log4j
-                             smtp
-                             (CSV.)
-                             (if (:graphite-host options)
-                               (Graphite. (or (:graphite-ns %) (url->rev-host (:url %)))
-                                          (:graphite-host options)
-                                          (:graphite-port options)))
-                             ]))
-          (try
-            (->> (or (:config options) *in*)
-                 (slurp)
-                 (read-string)
-                 (verify-config))
-            (catch java.io.IOException e
-              (println "Config file not found:" (:config options))
-              (System/exit -1))
-            (catch AssertionError e ;; clojure assertion
-              (println "config file error:" e)
-              (System/exit -1))
-            (catch Exception e
-              (println "Config file error" e)
-              (System/exit -1))))
-    ))
+    (when (:csv options)
+      (set-loggers! "grunf.adapter.csv"
+                    {:out
+                     (DailyRollingFileAppender.
+                      (EnhancedPatternLayout. "%d{ABSOLUTE}, [%-5p], %m%n")
+                      (:csv options)
+                      "'.'yyyy-MM-dd")}))
+    (map
+     (fn [{url :url
+                graphite-ns :graphite-ns
+                interval :interval
+                http-options :http-options :as task}
+               ]
+       (let [graphite (if (:graphite-host options)
+                        (Graphite. (or graphite-ns (url->rev-host url))
+                                   (:graphite-host options)
+                                   (:graphite-port options)))
+             default-http-options {:timeout (:timeout options)
+                                   :user-agent (:user-agent options)}
+             merge-default (reduce
+                            merge
+                            [{:interval (:interval options)}
+                             task
+                             {:http-options (merge default-http-options http-options)}])]
+         (Thread/sleep 1000) ;; pollite request
+         (future
+           (fetch merge-default
+                  (filter identity [log4j smtp (if (:csv options) (CSV.)) graphite])))))
+     (try
+       (->> (or (:config options) *in*)
+            (slurp)
+            (read-string)
+            (verify-config))
+       (catch java.io.IOException e
+         (println "Config file not found:" (:config options))
+         (System/exit -1))
+       (catch AssertionError e ;; clojure assertion
+         (println "config file error:" e)
+         (System/exit -1))
+       (catch Exception e
+         (println "Config file error" e)
+         (System/exit -1))))))
