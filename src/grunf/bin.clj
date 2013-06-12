@@ -108,7 +108,7 @@ lein run -c conf.example.clj --csv logs/bar.csv")
       (set-loggers! "grunf.adapter.csv"
                     {:out
                      (DailyRollingFileAppender.
-                      (EnhancedPatternLayout. "%d{ABSOLUTE}, [%-5p], %m%n")
+                      (EnhancedPatternLayout. "%d{ABSOLUTE},[%-5p],%m%n")
                       (:csv options)
                       "'.'yyyy-MM-dd")}))
     (map

@@ -1,4 +1,4 @@
-# grunf 0.2.9 (Alpha)
+# grunf 0.2.10 (Alpha)
 
 (simple clojure-based http monitoring tool)
 
@@ -100,7 +100,7 @@ For full documentaion of SMTP setup, please visit [postal -- internet email libr
 The CSV fields are
 
 ```
-HH:MM:ss,SSS, *log type*, *http status*, *url*, *response time (milliseconds)*
+HH:MM:ss,SSS,*log type*,*http status*,*url*,*response time (milliseconds)*
 ```
 
 ## Note
