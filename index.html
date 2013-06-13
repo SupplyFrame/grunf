@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link href='https://fonts.googleapis.com/css?family=Architects+Daughter' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="stylesheets/pygment_trac.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print" />
+
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    <title>Grunf by SupplyFrame</title>
+  </head>
+
+  <body>
+    <header>
+      <div class="inner">
+        <h1>Grunf</h1>
+        <h2>simple clojure-based http monitoring tool</h2>
+        <a href="https://github.com/SupplyFrame/grunf" class="button"><small>View project on</small>GitHub</a>
+      </div>
+    </header>
+
+    <div id="content-wrapper">
+      <div class="inner clearfix">
+        <section id="main-content">
+          <h1>
+<a name="grunf-0210-alpha" class="anchor" href="#grunf-0210-alpha"><span class="octicon octicon-link"></span></a>grunf 0.2.10 (Alpha)</h1>
+
+<p>(simple clojure-based http monitoring tool)</p>
+
+<h2>
+<a name="install" class="anchor" href="#install"><span class="octicon octicon-link"></span></a>Install</h2>
+
+<ol>
+<li><p>Clone the project to your target machine <code>git clone https://github.com/SupplyFrame/grunf</code></p></li>
+<li>
+<p>Install leiningen if you don't have it on your target machine. you can either</p>
+
+<ol>
+<li>Use the package manager to install it, ex <code>sudo apt-get install leiningen</code>
+</li>
+<li>Download <a href="https://raw.github.com/technomancy/leiningen/stable/bin/lein">the script</a> and put it in your path (ie. <code>/usr/local/bin</code>), then <code>chmod 755 ~/usr/local/bin/lein</code>.</li>
+</ol>
+</li>
+<li><p>In the grunf source code directory, run <code>lein deps</code> to install all the dependency libraries.</p></li>
+<li><p>Checkout <a href="https://github.com/SupplyFrame/grunf/wiki/graphite-on-ubuntu">graphite setup guide</a> on our wiki!</p></li>
+</ol><h2>
+<a name="usage" class="anchor" href="#usage"><span class="octicon octicon-link"></span></a>Usage</h2>
+
+<p>read config file and log in console.</p>
+
+<pre><code>lein run --log-level info --config conf.example.clj
+</code></pre>
+
+<p>Send events to graphite</p>
+
+<pre><code>lein run --config conf.example.clj --graphite-host localhost
+</code></pre>
+
+<p>Log in file <code>logs/foo.log</code>. Note <code>lein trampoline</code> let you send lein process to background without pausing the program.</p>
+
+<pre><code>mkdir logs
+lein trampoline run --log logs/foo.log -c conf.example.clj &amp;
+tail -f logs/foo.log
+</code></pre>
+
+<p>Read smtp config, will send mails when receive error</p>
+
+<pre><code>lein run -c conf.example.clj -s smtp.example.clj
+</code></pre>
+
+<p>export csv in logs/bar.csv</p>
+
+<pre><code>lein run -c conf.example.clj --csv logs/bar.csv
+</code></pre>
+
+<h2>
+<a name="command-line-options" class="anchor" href="#command-line-options"><span class="octicon octicon-link"></span></a>Command line options</h2>
+
+<p>The command line options for grunf are:</p>
+
+<pre><code>Usage:
+
+ Switches               Default  Desc
+ --------               -------  ----
+ -c, --config                    Path to the config file
+ --log                           log path for log4j. If not specified, log to console 
+ --log-level            debug    log level for log4j, (fatal|error|warn|info|debug)
+ --graphite-host                 Graphite server host
+ --graphite-port        2003     Graphite server port
+ --hostname             127.0.0.1  This server's hostname
+ --csv                             csv log path
+ --interval             60000      Default interval for each url request
+ --user-agent           Grunf      Default user agent string
+ --timeout              6000       Default timeout per request
+ -s, --smtp-config                 Path to smtp config file 
+ -h, --no-help, --help  false    Print this message
+</code></pre>
+
+<h2>
+<a name="configuration-files-format" class="anchor" href="#configuration-files-format"><span class="octicon octicon-link"></span></a>Configuration files format</h2>
+
+<p>The configuration file format for <code>conf.example.clj</code> is</p>
+
+<div class="highlight"><pre><span class="p">[{</span><span class="ss">:url</span> <span class="s">"http://www.yahoo.com/"</span>
+  <span class="ss">:interval</span> <span class="mi">1000</span>                      <span class="c1">;; optional</span>
+  <span class="ss">:validator</span> <span class="o">#</span><span class="p">(</span><span class="nb">re-find </span><span class="o">#</span><span class="s">"yahoo"</span> <span class="nv">%</span><span class="p">)</span>    <span class="c1">;; optional</span>
+  <span class="ss">:http-options</span> <span class="p">{</span><span class="ss">:timeout</span> <span class="mi">2000</span>        <span class="c1">;; :http-options itself is also optional </span>
+                 <span class="ss">:user-agent</span> <span class="s">"Mozilla"</span><span class="p">}</span>
+  <span class="ss">:graphite-ns</span> <span class="s">"com.yahoo.www"</span>        <span class="c1">;; defualt to reverse domain name</span>
+  <span class="p">}</span>
+  <span class="p">{</span><span class="ss">:url</span> <span class="s">"http://www.google.com/?search=abc"</span>
+   <span class="ss">:name</span> <span class="s">"search"</span>                     <span class="c1">;; append to graphite namespace</span>
+                                      <span class="c1">;; in this case it would be</span>
+                                      <span class="c1">;; "com.google.www.search"</span>
+  <span class="p">}</span>      <span class="c1">;; only url is required</span>
+<span class="p">]</span>
+</pre></div>
+
+<p>The smtp configuration file for <code>smtp.example.clj</code> is</p>
+
+<div class="highlight"><pre><span class="o">^</span><span class="p">{</span><span class="ss">:host</span> <span class="s">"smtp.gmail.com"</span>
+  <span class="ss">:user</span> <span class="s">"example@gmail.com"</span>
+  <span class="ss">:pass</span> <span class="s">"password"</span>
+  <span class="ss">:port</span> <span class="mi">1234</span>
+  <span class="ss">:tls</span> <span class="nv">true</span>
+  <span class="p">}</span>
+<span class="p">{</span><span class="ss">:from</span> <span class="s">"sysalerts@example.com"</span>
+ <span class="ss">:to</span> <span class="p">[</span><span class="s">"user1@gmail.com"</span> <span class="s">"user2@gmail.com"</span><span class="p">]</span>
+ <span class="ss">:subject</span> <span class="s">"Will be overwirtten by grunf!"</span>
+ <span class="ss">:body</span> <span class="s">"Will be overwritten by grunf!"</span>
+ <span class="p">}</span>
+</pre></div>
+
+<p>For full documentaion of SMTP setup, please visit <a href="https://github.com/drewr/postal">postal -- internet email library for clojure</a>.</p>
+
+<h2>
+<a name="output-format" class="anchor" href="#output-format"><span class="octicon octicon-link"></span></a>Output format</h2>
+
+<h3>
+<a name="csv" class="anchor" href="#csv"><span class="octicon octicon-link"></span></a>CSV</h3>
+
+<p>The CSV fields are</p>
+
+<pre><code>HH:MM:ss,SSS,*log type*,*http status*,*url*,*response time (milliseconds)*
+</code></pre>
+
+<h2>
+<a name="note" class="anchor" href="#note"><span class="octicon octicon-link"></span></a>Note</h2>
+
+<p>This tool is still in experimental status, but all the example configs should work just fine.</p>
+
+<h2>
+<a name="todo" class="anchor" href="#todo"><span class="octicon octicon-link"></span></a>TODO</h2>
+
+<ol>
+<li><p>Refactor to make it testable (and more funtional idiomatic).</p></li>
+<li><p>Tutorial of writing verification in configuration file.</p></li>
+</ol><h2>
+<a name="license" class="anchor" href="#license"><span class="octicon octicon-link"></span></a>License</h2>
+
+<p>Distributed under the Eclipse Public License, the same as Clojure.</p>
+        </section>
+
+        <aside id="sidebar">
+          <a href="https://github.com/SupplyFrame/grunf/zipball/master" class="button">
+            <small>Download</small>
+            .zip file
+          </a>
+          <a href="https://github.com/SupplyFrame/grunf/tarball/master" class="button">
+            <small>Download</small>
+            .tar.gz file
+          </a>
+
+          <p class="repo-owner"><a href="https://github.com/SupplyFrame/grunf"></a> is maintained by <a href="https://github.com/SupplyFrame">SupplyFrame</a>.</p>
+
+          <p>This page was generated by <a href="pages.github.com">GitHub Pages</a> using the Architect theme by <a href="http://twitter.com/jasonlong">Jason Long</a>.</p>
+        </aside>
+      </div>
+    </div>
+
+  
+  </body>
+</html>
