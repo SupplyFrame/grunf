@@ -2,16 +2,31 @@
 
 (simple clojure-based http monitoring tool)
 
+## Install
+
+1. Clone the project to your target machine `git clone https://github.com/SupplyFrame/grunf`
+
+2. Install leiningen if you don't have it on your target machine. you can either
+    1. Use the package manager to install it, ex `sudo apt-get install leiningen`
+    2. Download [the script](https://raw.github.com/technomancy/leiningen/stable/bin/lein) and put it in your path (ie. `/usr/local/bin`), then `chmod 755 ~/usr/local/bin/lein`.
+
+3. In the grunf source code directory, run `lein deps` to install all the dependency libraries.
+
+4. Checkout [graphite setup guide][] on our wiki!
+
+[graphite setup guide]: https://github.com/SupplyFrame/grunf/wiki/graphite-on-ubuntu
+
+
 ## Usage
 
-read config file and log in concole
+read config file and log in console.
 ```
 lein run --log-level info --config conf.example.clj
 ```
 
-Can also read config from stdin
+Send events to graphite
 ```
-lein run < conf.example.clj
+lein run --config conf.example.clj --graphite-host localhost
 ```
 
 Log in file `logs/foo.log`. Note `lein trampoline` let you send lein process to background without pausing the program.
@@ -109,11 +124,10 @@ This tool is still in experimental status, but all the example configs should wo
 
 ## TODO
 
-1. Write tutorial of using grunf with graphite
 
-2. Refactor to make it testable (and more funtional idomatic).
+1. Refactor to make it testable (and more funtional idiomatic).
 
-3. More options for global config
+1. Tutorial of writing verification in configuration file.
 
 ## License
 

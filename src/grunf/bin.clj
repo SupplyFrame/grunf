@@ -38,8 +38,8 @@
 
 (def default-usage
   "Example:
-lein run --log-level info --config conf.example.clj 
-lein run < conf.example.clj # Can also read config from stdin
+lein run --log-level info --config conf.example.clj
+lein run --config conf.example.clj --graphite-host localhost # Send events to graphite
 lein trampoline run --log logs/foo.log -c conf.example.clj & tail -f logs/foo.log
 # SMTP example:
 lein run -c conf.example.clj -s smtp.example.clj
