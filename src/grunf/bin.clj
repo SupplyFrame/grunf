@@ -21,6 +21,8 @@
 (def log-pattern "Log4j pattern layout"
   "%d{ISO8601}{GMT} [%-5p] [%t] - %m%n")
 
+(def csv-pattern "%d{ABSOLUTE},[%-5p],%m%n")
+
 (def cli-options
   "Grunf command line options"
   [["-c" "--config" "Path to the config file"]
@@ -108,7 +110,7 @@ lein run -c conf.example.clj --csv logs/bar.csv")
       (set-loggers! "grunf.adapter.csv"
                     {:out
                      (DailyRollingFileAppender.
-                      (EnhancedPatternLayout. "%d{ABSOLUTE},[%-5p],%m%n")
+                      (EnhancedPatternLayout. csv-pattern)
                       (:csv options)
                       "'.'yyyy-MM-dd")}))
     (map

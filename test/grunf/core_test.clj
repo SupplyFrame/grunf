@@ -3,8 +3,10 @@
   (:use clojure.test
         grunf.core
         grunf.adapter.log4j
+        grunf.adapter.csv
         clj-logging-config.log4j)
-  (:import [grunf.adapter.log4j Log4j]))
+  (:import [grunf.adapter.log4j Log4j]
+           [grunf.adapter.csv CSV]))
 
 ;; copied from clj-logging-config
 ;; written by Malcolm Sparks.
@@ -74,3 +76,51 @@
                          :pattern grunf.bin/log-pattern)
             ((log-server-error log4j) context)))
     )
+
+(deftest test-csv
+  (def csv (CSV.))
+  (def context {:error "error"
+                :status 200
+                :headers {:location "http://test2.org"}
+                :opts {:validator (constantly true)
+                       :validator-source '(constantly true)
+                       :url "http://test.org"
+                       :start (System/currentTimeMillis)
+                       }})
+
+  (testing "log-success"
+    (expect #"\d\d:\d\d:\d\d,\d+,\[INFO \],200,http://test.org,\d+"
+            (set-logger! "grunf.adapter.csv"
+                 :pattern grunf.bin/csv-pattern)
+            ((log-success csv) context)))
+
+  (testing "log-validate-error"
+    (expect #"\d\d:\d\d:\d\d,\d+,\[ERROR\],200,http://test.org,\d+"
+            (set-logger! "grunf.adapter.csv"
+                 :pattern grunf.bin/csv-pattern)
+            ((log-validate-error csv) context)))
+
+  (testing "log-redirect"
+    (expect #"^$"
+            (set-logger! "grunf.adapter.csv"
+                 :pattern grunf.bin/csv-pattern)
+            ((log-redirect csv) context)))
+
+  (testing "log-unknown-error"
+    (expect #"\d\d:\d\d:\d\d,\d+,\[ERROR\],200,http://test.org,\d+"
+            (set-logger! "grunf.adapter.csv"
+                 :pattern grunf.bin/csv-pattern)
+            ((log-unknown-error csv) context)))
+
+  (testing "log-client-error"
+    (expect #"\d\d:\d\d:\d\d,\d+,\[ERROR\],200,http://test.org,\d+"
+            (set-logger! "grunf.adapter.csv"
+                 :pattern grunf.bin/csv-pattern)
+            ((log-client-error csv) context)))
+
+  (testing "log-server-error"
+    (expect #"\d\d:\d\d:\d\d,\d+,\[ERROR\],200,http://test.org,\d+"
+            (set-logger! "grunf.adapter.csv"
+                 :pattern grunf.bin/csv-pattern)
+            ((log-server-error csv) context)))
+  )
