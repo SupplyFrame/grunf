@@ -1,4 +1,4 @@
-# grunf 0.2.10 (Alpha)
+# grunf 0.2.12 (Alpha)
 
 (simple clojure-based http monitoring tool)
 
@@ -122,10 +122,24 @@ HH:MM:ss,SSS,*log type*,*http status*,*url*,*response time (milliseconds)*
 
 This tool is still in experimental status, but all the example configs should work just fine.
 
-## TODO
+### Test covered
+
+* SMTP send mail error and timeout error
+
+* log4j
+
+* csv
 
 
-1. Refactor to make it testable (and more funtional idiomatic).
+## TODOs
+
+1. Config parsing test
+
+1. SMTP parsing test
+
+1. graphite adapter test
+
+1. graphtie namespace generator test
 
 1. Tutorial of writing verification in configuration file.
 
