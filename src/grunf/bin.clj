@@ -21,6 +21,8 @@
 (def log-pattern "Log4j pattern layout"
   "%d{ISO8601}{GMT} [%-5p] [%t] - %m%n")
 
+(def csv-pattern "%d{ABSOLUTE},[%-5p],%m%n")
+
 (def cli-options
   "Grunf command line options"
   [["-c" "--config" "Path to the config file"]
@@ -67,15 +69,6 @@ lein run -c conf.example.clj --csv logs/bar.csv")
        (reverse)
        (clojure.string/join ".")))
 
-(defn- create-log4j [options]
-  (Log4j. "grunf.adapter.log4j"
-          (-> options :log-level keyword) log-pattern
-          (if (:log options)
-            (DailyRollingFileAppender.
-             (EnhancedPatternLayout. log-pattern)
-             (:log options)
-             "'.'yyyy-MM-dd")
-            :console)))
 
 (defn- create-graphite [options]
   )
@@ -85,7 +78,7 @@ lein run -c conf.example.clj --csv logs/bar.csv")
     (try (-> smtp-file
              (slurp)
              (read-string)
-             (Mail. (:hostname options)))
+             (Mail. (:hostname options) 60000))
          (catch java.io.IOException e
            (println "smtp config file not found")
            (System/exit -1))
@@ -94,21 +87,29 @@ lein run -c conf.example.clj --csv logs/bar.csv")
            (System/exit -1)))))
 
 (defn -main [& argv]
-  (let [[options args banner] (apply cli argv cli-options)
-        log4j (create-log4j options)
+  (let [[options args banner] (apply cli argv cli-options) 
         smtp (create-smtp options)]
     (when (:help options)
       (println default-usage)
       (println banner)
       (System/exit 0))
-    (init-logger log4j)
-    (set-loggers! "grunf.adapter.postal" ;; quick hack
-                  {:pattern log-pattern})
+    (set-loggers! "grunf.adapter.postal"
+                  {:pattern log-pattern}
+                  "grunf.adapter.log4j"
+                  {:level (-> options :log-level keyword)
+                   :pattern log-pattern
+                   :out (if (:log options)
+                          (DailyRollingFileAppender.
+                           (EnhancedPatternLayout. log-pattern)
+                           (:log options)
+                           "'.'yyyy-MM-dd")
+                          :console)}
+                  )
     (when (:csv options)
       (set-loggers! "grunf.adapter.csv"
                     {:out
                      (DailyRollingFileAppender.
-                      (EnhancedPatternLayout. "%d{ABSOLUTE},[%-5p],%m%n")
+                      (EnhancedPatternLayout. csv-pattern)
                       (:csv options)
                       "'.'yyyy-MM-dd")}))
     (map
@@ -135,7 +136,7 @@ lein run -c conf.example.clj --csv logs/bar.csv")
          (Thread/sleep 1000) ;; pollite request
          (future
            (fetch merge-default
-                  (filter identity [log4j smtp (if (:csv options) (CSV.)) graphite])))))
+                  (filter identity [(Log4j.) smtp (if (:csv options) (CSV.)) graphite])))))
      (try
        (->> (or (:config options) *in*)
             (slurp)

@@ -59,3 +59,4 @@ tramp
 smtp-local.clj
 
 logs
+.lein-failures

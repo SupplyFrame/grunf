@@ -5,7 +5,7 @@
         [clojail.core :only [thunk-timeout]])
   (:import (java.util.concurrent TimeoutException)))
 
-(deftype Mail [options hostname])
+(deftype Mail [options hostname timeout])
 
 (extend-type Mail
   GrunfOutputAdapter
@@ -33,9 +33,11 @@
                               (println body))))]
                (if-not (= (:error result) :SUCCESS)
                  (log/error "mail error:" result))))
-           60000)
+           (.timeout this))
           (catch TimeoutException e
-            (log/error "send mail failed:" e))))))
+            (log/error "send mail timeout:" (.timeout this) e))
+          (catch Exception e
+            (log/error "unknown exception" e))))))
 
   (log-redirect [this] (fn [_]))
   (log-unknown-error [this]
@@ -64,8 +66,10 @@
                               (println error))))]
                (if-not (= (:error result) :SUCCESS)
                  (log/error "mail error:" result))))
-           60000)
+           (.timeout this))
           (catch TimeoutException e
-            (log/error "send mail failed:" e))))))
+            (log/error "send mail timeout:" (.timeout this) e))
+          (catch Exception e
+            (log/error "unknown exception" e))))))
   (log-client-error [this] (grunf.core/log-unknown-error this))
   (log-server-error [this] (grunf.core/log-unknown-error this)))
