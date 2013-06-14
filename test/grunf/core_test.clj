@@ -1,7 +1,7 @@
 (ns grunf.core-test
   (:require grunf.bin)
   (:use clojure.test
-        grunf.core
+        grunf.core ;; we need protocol definition here
         grunf.adapter.log4j
         grunf.adapter.csv
         clj-logging-config.log4j)
@@ -30,7 +30,7 @@
 ;; work on log4j/csv tests first
 
 (deftest test-log4j
-  (def log4j (Log4j. nil nil nil nil))
+  (def log4j (Log4j.))
   (def context {:error "error"
                 :status 200
                 :headers {:location "http://test2.org"}

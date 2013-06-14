@@ -6,24 +6,9 @@
         [grunf.core :only [GrunfOutputAdapter]]))
 
 
-(defprotocol SetupLog4j
-  "A protocol that Log4j needed"
-  (init-logger [this] "runs set-loggers!"))
-
-(defmacro with-log4j [this & body] ;; It should create custom namespace
-  `(with-logging-config
-     [(.namespace ~this) {:level (.level ~this)}]
-     ~@body))
-
-(deftype Log4j [namespace level pattern out])
+(deftype Log4j [])
 
 (extend-type Log4j
-  SetupLog4j
-  (init-logger [this]
-    (set-loggers! (.namespace this)
-                  {:level (.level this)
-                   :pattern (.pattern this)
-                   :out (.out this)}))
   GrunfOutputAdapter
   (log-success [this]
     (fn [{{v-source :validator-source validator :validator url :url start :start} :opts
