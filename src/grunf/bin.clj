@@ -78,7 +78,7 @@ lein run -c conf.example.clj --csv logs/bar.csv")
     (try (-> smtp-file
              (slurp)
              (read-string)
-             (Mail. (:hostname options)))
+             (Mail. (:hostname options) 60000))
          (catch java.io.IOException e
            (println "smtp config file not found")
            (System/exit -1))
@@ -93,7 +93,7 @@ lein run -c conf.example.clj --csv logs/bar.csv")
       (println default-usage)
       (println banner)
       (System/exit 0))
-    (set-loggers! "grunf.adapter.postal" ;; quick hack
+    (set-loggers! "grunf.adapter.postal"
                   {:pattern log-pattern}
                   "grunf.adapter.log4j"
                   {:level (-> options :log-level keyword)
