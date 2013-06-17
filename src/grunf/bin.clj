@@ -9,7 +9,8 @@
         grunf.adapter.log4j
         grunf.adapter.graphite
         grunf.adapter.postal
-        grunf.adapter.csv)
+        grunf.adapter.csv
+        grunf.utils)
   (:import [org.apache.log4j DailyRollingFileAppender EnhancedPatternLayout]
            [grunf.adapter.log4j Log4j]
            [grunf.adapter.graphite Graphite]
@@ -48,30 +49,7 @@ lein run -c conf.example.clj -s smtp.example.clj
 # CSV output example
 lein run -c conf.example.clj --csv logs/bar.csv")
 
-(defn- verify-config [config-array]
-  "Verify grunf config file using assertion and exception handling"
-  (assert (= (type config-array) clojure.lang.PersistentVector)
-          "Config should be an clojure array")
-  (doseq [config-array-element config-array]
-    (assert (= (type config-array-element) clojure.lang.PersistentArrayMap)
-            "Each element in config array should be a map")
-    (assert (:url config-array-element)
-            "Must have :url in config map"))
-  config-array)
 
-(defn- url->rev-host
-  "Resove host, than reverse the order
-   http://www.yahoo.com/search.html -> com.yahoo.www"
-  [url]
-  (->> url
-       (re-find #"(?<=://).+?(?=/|$)")
-       (.split #"\.")
-       (reverse)
-       (clojure.string/join ".")))
-
-
-(defn- create-graphite [options]
-  )
 
 (defn- create-smtp [options]
   (if-let [smtp-file (:smtp-config options)]
