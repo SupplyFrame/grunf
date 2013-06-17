@@ -1,4 +1,4 @@
-# grunf 0.2.12 (Alpha)
+# grunf 0.3.0 (Beta)
 
 (simple clojure-based http monitoring tool)
 
@@ -54,20 +54,21 @@ The command line options for grunf are:
 ```
 Usage:
 
- Switches               Default  Desc
- --------               -------  ----
- -c, --config                    Path to the config file
- --log                           log path for log4j. If not specified, log to console 
- --log-level            debug    log level for log4j, (fatal|error|warn|info|debug)
- --graphite-host                 Graphite server host
- --graphite-port        2003     Graphite server port
+ Switches               Default    Desc
+ --------               -------    ----
+ -c, --config                      Path to the config file
+ --log                             log path for log4j. If not specified, log to console 
+ --log-level            debug      log level for log4j, (fatal|error|warn|info|debug)
+ --graphite-host                   Graphite server host
+ --graphite-port        2003       Graphite server port
+ --graphite-prefix                 prefix namespace for graphite
  --hostname             127.0.0.1  This server's hostname
  --csv                             csv log path
  --interval             60000      Default interval for each url request
  --user-agent           Grunf      Default user agent string
  --timeout              6000       Default timeout per request
  -s, --smtp-config                 Path to smtp config file 
- -h, --no-help, --help  false    Print this message
+ -h, --no-help, --help  false      Print this message
 ```
 
 ## Configuration files format
@@ -130,16 +131,30 @@ This tool is still in experimental status, but all the example configs should wo
 
 * csv
 
+## News and changes
+
+* **v0.3**
+  1. Automatic graphite namespace generator now covers the full uri path
+  1. Can use ``--graphite-prefix` to setup prefix namespace for graphite
+  1. Graphite namespace is now under test coverages
+  1. Refactored `bin.clj`, many functions go to `utils.clj`
+
+* **v0.2.12**
+  1. Tests for most adapters (log4j, csv, smtp)
+
+* **v0.2.10**
+  1. Socket exception handling for graphite
+
+* **v0.2.9**
+  1. `:name` option in config file
+
+* **v0.2.8**
+  1. command line options for global request interval, user-agent, and request timeout
 
 ## TODOs
 
-1. Config parsing test
-
-1. SMTP parsing test
 
 1. graphite adapter test
-
-1. graphtie namespace generator test
 
 1. Tutorial of writing verification in configuration file.
 
