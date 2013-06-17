@@ -24,7 +24,8 @@
               :or {interval 5000,
                    method :get,
                    validator '(constantly true)
-                   graphite-ns ""}}
+                   graphite-ns ""}
+              :as input-options}
              adapters]
   (letfn
       [(callback

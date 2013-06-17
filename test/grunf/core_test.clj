@@ -137,15 +137,15 @@
                        :start (System/currentTimeMillis)
                        }})
   (testing "mail error in log-unknown-error"
-    (expect #"\d{4}-\d\d-\d\d [\d:,]+ \[ERROR\] \[.*\] - mail error: \{.*\}"
+    (expect #"\d{4}-\d\d-\d\d [\d:,]+ \[ERROR\] \[.*\]"
             (set-logger! "grunf.adapter.postal"
                          :pattern grunf.bin/log-pattern)
             ((log-unknown-error (Mail. {:from "abc"} "abc.def" 60)) context)
-            (Thread/sleep 120)
+            (Thread/sleep 160)
             ))
 
   (testing "mail error in log-server-error"
-    (expect #"\d{4}-\d\d-\d\d [\d:,]+ \[ERROR\] \[.*\] - mail error: \{.*\}"
+    (expect #"\d{4}-\d\d-\d\d [\d:,]+ \[ERROR\] \[.*\]"
             (set-logger! "grunf.adapter.postal"
                          :pattern grunf.bin/log-pattern)
             ((log-server-error (Mail. {:from "abc"} "abc.def" 60)) context)
@@ -153,7 +153,7 @@
             ))
 
   (testing "mail error in log-client-error"
-    (expect #"\d{4}-\d\d-\d\d [\d:,]+ \[ERROR\] \[.*\] - mail error: \{.*\}"
+    (expect #"\d{4}-\d\d-\d\d [\d:,]+ \[ERROR\] \[.*\]"
             (set-logger! "grunf.adapter.postal"
                          :pattern grunf.bin/log-pattern)
             ((log-client-error (Mail. {:from "abc"} "abc.def" 60)) context)
@@ -161,7 +161,7 @@
             ))
 
   (testing "mail error in log-validate-error"
-    (expect #"\d{4}-\d\d-\d\d [\d:,]+ \[ERROR\] \[.*\] - mail error: \{.*\}"
+    (expect #"\d{4}-\d\d-\d\d [\d:,]+ \[ERROR\] \[.*\]"
             (set-logger! "grunf.adapter.postal"
                          :pattern grunf.bin/log-pattern)
             ((log-validate-error (Mail. {:from "abc"} "abc.def" 60)) context)

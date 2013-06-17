@@ -9,7 +9,8 @@
         grunf.adapter.log4j
         grunf.adapter.graphite
         grunf.adapter.postal
-        grunf.adapter.csv)
+        grunf.adapter.csv
+        grunf.utils)
   (:import [org.apache.log4j DailyRollingFileAppender EnhancedPatternLayout]
            [grunf.adapter.log4j Log4j]
            [grunf.adapter.graphite Graphite]
@@ -30,6 +31,7 @@
    ["--log-level" "log level for log4j, (fatal|error|warn|info|debug)" :default "debug"]
    ["--graphite-host" "Graphite server host"]
    ["--graphite-port" "Graphite server port" :default 2003 :parse-fn #(Integer. %)]
+   ["--graphite-prefix" "prefix namespace for graphite"]
    ["--hostname" "This server's hostname" :default "127.0.0.1"]
    ["--csv" "csv log path"]
    ["--interval" "Default interval for each url request" :default 60000 :parse-fn #(Integer. %)]
@@ -48,30 +50,13 @@ lein run -c conf.example.clj -s smtp.example.clj
 # CSV output example
 lein run -c conf.example.clj --csv logs/bar.csv")
 
-(defn- verify-config [config-array]
-  "Verify grunf config file using assertion and exception handling"
-  (assert (= (type config-array) clojure.lang.PersistentVector)
-          "Config should be an clojure array")
-  (doseq [config-array-element config-array]
-    (assert (= (type config-array-element) clojure.lang.PersistentArrayMap)
-            "Each element in config array should be a map")
-    (assert (:url config-array-element)
-            "Must have :url in config map"))
-  config-array)
-
-(defn- url->rev-host
-  "Resove host, than reverse the order
-   http://www.yahoo.com/search.html -> com.yahoo.www"
-  [url]
-  (->> url
-       (re-find #"(?<=://).+?(?=/|$)")
-       (.split #"\.")
-       (reverse)
-       (clojure.string/join ".")))
-
-
-(defn- create-graphite [options]
-  )
+;; TODOs
+;; 4. use (.start (Thread. (fn ...))) instead of future
+;;    or pcalls
+;; 5. smtp creator in main or util?
+;; 6. merge config is super ugly...
+;; 7. http options
+;; 8. graphite namespace
 
 (defn- create-smtp [options]
   (if-let [smtp-file (:smtp-config options)]
@@ -80,74 +65,72 @@ lein run -c conf.example.clj --csv logs/bar.csv")
              (read-string)
              (Mail. (:hostname options) 60000))
          (catch java.io.IOException e
-           (println "smtp config file not found")
-           (System/exit -1))
-         (catch Exception e
-           (println "read smtp-config file failed")
-           (System/exit -1)))))
+           (throw (java.io.IOException. "smtp config file not found"))))))
+
+(defn- read-urls-config [file]
+  "Read config and throw exception if validation failed"
+  (try ((comp (fn [config-array]
+                 (assert (= (type config-array) clojure.lang.PersistentVector)
+                         "Config should be an clojure array")
+                 (doseq [config-array-element config-array]
+                   (assert (= (type config-array-element) clojure.lang.PersistentArrayMap)
+                           "Each element in config array should be a map")
+                   (assert (:url config-array-element)
+                           "Must have :url in config map"))
+                 config-array)
+               read-string
+               slurp) file)             ; point-free style
+       (catch java.io.IOException e
+         (throw (java.io.IOException. (str "Config file " file " not found" ))))))
+
+
+;; TESTED
+(defn- daily-logger [file log-pattern]
+  (if file                              ; if nil the default prints to console
+    (DailyRollingFileAppender.
+     (EnhancedPatternLayout. log-pattern)
+     file
+     "'.'yyyy-MM-dd")))
+
+
+(defn- with-http-global [{:keys [timeout user-agent]}]
+  (fn [http-options-local]
+    (merge {:timeout timeout
+            :user-agent user-agent}
+           http-options-local)))
+
 
 (defn -main [& argv]
   (let [[options args banner] (apply cli argv cli-options) 
         smtp (create-smtp options)]
-    (when (:help options)
+    (when (or (:help options) (nil? argv))
       (println default-usage)
       (println banner)
       (System/exit 0))
-    (set-loggers! "grunf.adapter.postal"
-                  {:pattern log-pattern}
-                  "grunf.adapter.log4j"
-                  {:level (-> options :log-level keyword)
-                   :pattern log-pattern
-                   :out (if (:log options)
-                          (DailyRollingFileAppender.
-                           (EnhancedPatternLayout. log-pattern)
-                           (:log options)
-                           "'.'yyyy-MM-dd")
-                          :console)}
-                  )
-    (when (:csv options)
-      (set-loggers! "grunf.adapter.csv"
-                    {:out
-                     (DailyRollingFileAppender.
-                      (EnhancedPatternLayout. csv-pattern)
-                      (:csv options)
-                      "'.'yyyy-MM-dd")}))
-    (map
-     (fn [{url :url
-           graphite-ns :graphite-ns
-           interval :interval
-           name :name
-           http-options :http-options :as task}
-          ]
-       (let [graphite-ns (cond graphite-ns graphite-ns
-                               name (str (url->rev-host url) "." name)
-                               :else (url->rev-host url))
-             graphite (if (:graphite-host options)
-                        (Graphite. graphite-ns
-                                   (:graphite-host options)
-                                   (:graphite-port options)))
-             default-http-options {:timeout (:timeout options)
-                                   :user-agent (:user-agent options)}
-             merge-default (reduce
-                            merge
-                            [{:interval (:interval options)}
-                             task
-                             {:http-options (merge default-http-options http-options)}])]
-         (Thread/sleep 1000) ;; pollite request
-         (future
-           (fetch merge-default
-                  (filter identity [(Log4j.) smtp (if (:csv options) (CSV.)) graphite])))))
-     (try
-       (->> (or (:config options) *in*)
-            (slurp)
-            (read-string)
-            (verify-config))
-       (catch java.io.IOException e
-         (println "Config file not found:" (:config options))
-         (System/exit -1))
-       (catch AssertionError e ;; clojure assertion
-         (println "config file error:" e)
-         (System/exit -1))
-       (catch Exception e
-         (println "Config file error" e)
-         (System/exit -1))))))
+    (set-loggers!
+     "grunf.adapter.log4j"
+     {:level (-> options :log-level keyword)
+      :out (daily-logger (:log options) log-pattern)
+      :pattern log-pattern}
+     "grunf.adapter.csv"
+     {:out (daily-logger (:csv options) csv-pattern)}
+     "grunf.adapter.postal"
+     {:pattern log-pattern})
+    (try
+      (let [smtp-config (create-smtp options)
+            urls-config (read-urls-config (:config options))
+            csv (if (:csv options) (CSV.))
+            log4j (Log4j.)
+            mk-graphite (with-graphite-global options (:graphite-prefix options))
+            mk-http-option (with-http-global options)]
+        (doseq [url-config urls-config]
+          (let [adapters (filter identity [log4j smtp-config csv (mk-graphite url-config)])
+                http-options (mk-http-option (:http-options url-config))
+                task (reduce merge [{:interval (:interval options)}
+                                    url-config
+                                    http-options])]
+            (.start (Thread. (fn [] (fetch task adapters) ))) )
+          (Thread/sleep 3000)))
+      (catch Exception e
+        (println e)
+        (System/exit -1)))))
