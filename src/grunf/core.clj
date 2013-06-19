@@ -37,9 +37,12 @@
                2 (if-let [v (:validator opts)]
                    (if (= (:ad-hoc opts) :js-trace)
                      (try
-                       (let [t-url (re-find #"(?<=src=').*(?='></script>)")]
-                         (log-wrapper log-redirect)
-                         ((http-method method) t-url opts callback))
+                       (if-let [t-url (re-find #"(?<=src=').*(?='></script>)")]
+                         (do
+                           ((apply juxt (map log-redirect adapters))
+                            (assoc-in context [:headers :location] t-url))
+                           ((http-method method) t-url opts callback))
+                         (log-wrapper log-success))
                        (catch Exception e
                          (log-wrapper log-unknown-error)))
                      (try  (if (v body)
@@ -58,6 +61,7 @@
       ((http-method method) url (assoc http-options
                                   ;;:timeout 60000
                                   ;;:user-agent "Grunf"
+                                  :ad-hoc (:ad-hoc input-options)
                                   :validator (eval validator)
                                   :validator-source validator
                                   :as :text
