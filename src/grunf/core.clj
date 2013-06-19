@@ -35,11 +35,18 @@
              (log-wrapper log-unknown-error)
              (case (quot status 100)
                2 (if-let [v (:validator opts)]
-                   (try (if (v body)
-                          (log-wrapper log-success)
-                          (log-wrapper log-validate-error))
-                        (catch Exception e
-                          (log-wrapper log-validate-error)))
+                   (if (= (:ad-hoc opts) :js-trace)
+                     (try
+                       (let [t-url (re-find #"(?<=src=').*(?='></script>)")]
+                         (log-wrapper log-redirect)
+                         ((http-method method) t-url opts callback))
+                       (catch Exception e
+                         (log-wrapper log-unknown-error)))
+                     (try  (if (v body)
+                             (log-wrapper log-success)
+                             (log-wrapper log-validate-error))
+                           (catch Exception e
+                             (log-wrapper log-validate-error))))
                    (log-wrapper log-success))
                3 (do (log-wrapper log-redirect)
                      ((http-method method)
