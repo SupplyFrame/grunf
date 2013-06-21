@@ -1,4 +1,4 @@
-# grunf 0.3.0 (Beta)
+# grunf 0.3.1 (Beta)
 
 (simple clojure-based http monitoring tool)
 
@@ -131,25 +131,30 @@ This tool is still in experimental status, but all the example configs should wo
 
 * csv
 
+* utility functions
+
 ## News and changes
 
+* **v0.3.1**
+  - Fix graphite CLI option bug
+
 * **v0.3**
-  1. Automatic graphite namespace generator now covers the full uri path
-  1. Can use ``--graphite-prefix` to setup prefix namespace for graphite
-  1. Graphite namespace is now under test coverages
-  1. Refactored `bin.clj`, many functions go to `utils.clj`
+  - Automatic graphite namespace generator now covers the full uri path
+  - Can use ``--graphite-prefix` to setup prefix namespace for graphite
+  - Graphite namespace is now under test coverages
+  - Refactored `bin.clj`, many functions go to `utils.clj`
 
 * **v0.2.12**
-  1. Tests for most adapters (log4j, csv, smtp)
+  - Tests for most adapters (log4j, csv, smtp)
 
 * **v0.2.10**
-  1. Socket exception handling for graphite
+  - Socket exception handling for graphite
 
 * **v0.2.9**
-  1. `:name` option in config file
+  - `:name` option in config file
 
 * **v0.2.8**
-  1. command line options for global request interval, user-agent, and request timeout
+  - command line options for global request interval, user-agent, and request timeout
 
 ## TODOs
 

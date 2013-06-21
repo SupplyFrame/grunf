@@ -47,10 +47,12 @@
 (defn with-graphite-global
   ([options] (with-graphite-global options nil))
   ([{:keys [graphite-host graphite-port]} prefix-ns]
-     (fn [{:keys [graphite-ns name url]}]
-       (let [prefix-ns (if prefix-ns (str prefix-ns "."))
-             ns (str prefix-ns
-                     (cond graphite-ns graphite-ns
-                           name (str (url->rev-host url) "." name)
-                           :else (url->rev-full url)))]
-         (Graphite. ns graphite-host graphite-port)))))
+     (if graphite-host
+       (fn [{:keys [graphite-ns name url]}]
+         (let [prefix-ns (if prefix-ns (str prefix-ns "."))
+               ns (str prefix-ns
+                       (cond graphite-ns graphite-ns
+                             name (str (url->rev-host url) "." name)
+                             :else (url->rev-full url)))]
+           (Graphite. ns graphite-host graphite-port)))
+       (fn [_]))))
