@@ -1,4 +1,4 @@
-(defproject grunf "0.3.0"
+(defproject grunf "0.3.1"
   :description "simple infrastructure monitoring toolkit"
   :url "https://github.com/SupplyFrame/grunf"
   :main grunf.bin
