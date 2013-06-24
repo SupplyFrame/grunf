@@ -1,4 +1,4 @@
-# grunf 0.3.1 (Beta)
+# grunf 0.3.2 (Beta)
 
 (simple clojure-based http monitoring tool)
 
@@ -134,6 +134,9 @@ This tool is still in experimental status, but all the example configs should wo
 * utility functions
 
 ## News and changes
+
+* **v0.3.2**
+  - Wrap (eval validator) to let block, hopefully can solve memory out of space error
 
 * **v0.3.1**
   - Fix graphite CLI option bug
