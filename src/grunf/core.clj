@@ -1,6 +1,8 @@
 (ns grunf.core
   "gurnf.core"
-  (:require [org.httpkit.client :as http]))
+  (:require [org.httpkit.client :as http]
+            [clojure.string :as str])
+  (:import [java.net URLEncoder]))
 
 (defprotocol GrunfOutputAdapter
   "A protocol for grunf instance to log or push data to other service"
@@ -20,11 +22,23 @@
     :put http/put
     :delete http/delete))
 
-(defn fetch [{:keys [url interval method http-options validator graphite-ns]
+(defn- url-encode [s] (URLEncoder/encode (str s) "utf8"))
+
+(defn- query-string
+  "Returns URL-encoded query string for given params map."
+  [m]
+  (let [param (fn [k v]  (str (url-encode (name k)) "=" (url-encode v)))
+        join  (fn [strs] (str/join "&" strs))]
+    (join (for [[k v] m] (if (sequential? v)
+                           (join (map (partial param k) (or (seq v) [""])))
+                           (param k v))))))
+
+(defn fetch [{:keys [url interval method http-options validator graphite-ns params-fn]
               :or {interval 5000,
                    method :get,
                    validator '(constantly true)
-                   graphite-ns ""}
+                   graphite-ns ""
+                   params-fn '(repeat nil)}
               :as input-options}
              adapters]
   (letfn
@@ -47,14 +61,22 @@
                4 (log-wrapper log-client-error)
                5 (log-wrapper log-server-error)
                (log-wrapper log-unknown-error)))))]
-    (let [validator-exec (eval validator)]
-      (loop [start (System/currentTimeMillis)]
-        ((http-method method) url (assoc http-options
-                                    ;;:timeout 60000
-                                    ;;:user-agent "Grunf"
-                                    :validator validator-exec
-                                    :validator-source validator
-                                    :as :text
-                                    :start start) callback)
+    (let [validator (eval validator)]
+      (loop [start (System/currentTimeMillis)
+             params-seq (eval params-fn)]
+        ((http-method method)
+         (if (first params-seq)         ; url
+           (if (neg? (.indexOf ^String url (int \?)))
+             (str url "?" (query-string (first params-seq)))
+             (str url "&" (query-string (first params-seq))))
+           url)
+         (assoc http-options            ; http-options
+           ;;:timeout 60000
+           ;;:user-agent "Grunf"
+           ;;:query-params (first params-seq)
+           :validator validator
+           :validator-source validator
+           :as :text
+           :start start) callback)
         (Thread/sleep interval)
-        (recur (System/currentTimeMillis))))))
+        (recur (System/currentTimeMillis) (rest params-seq))))))

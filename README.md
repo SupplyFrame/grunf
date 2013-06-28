@@ -1,4 +1,4 @@
-# grunf 0.3.2 (Beta)
+# grunf 0.3.3 (Beta)
 
 (simple clojure-based http monitoring tool)
 
@@ -73,6 +73,8 @@ Usage:
 
 ## Configuration files format
 
+### URL configurations
+
 The configuration file format for `conf.example.clj` is
 
 ```clj
@@ -82,6 +84,7 @@ The configuration file format for `conf.example.clj` is
   :http-options {:timeout 2000        ;; :http-options itself is also optional 
                  :user-agent "Mozilla"}
   :graphite-ns "com.yahoo.www"        ;; defualt to reverse domain name
+  :params-fn (map #(hash-map :id %) (iterate inc 0)) ;; programatically control query params
   }
   {:url "http://www.google.com/?search=abc"
    :name "search"                     ;; append to graphite namespace
@@ -90,6 +93,34 @@ The configuration file format for `conf.example.clj` is
   }      ;; only url is required
 ]
 ```
+
+#### Experimental features
+
+`:params-fn` is a function that generate a lazy sequence, and every element in that lazy sequence will be transformed into query params in each query. For example:
+
+```clj
+  :params-fn (map #(hash-map :id %) (iterate inc 0)) ;; programatically control query params
+```
+
+will transformed into these urls:
+
+```
+http://www.google.com/?id=1
+http://www.google.com/?id=2
+... # and so on
+```
+
+And `(cycle [{:search "abc"} {:search "def"}])` will transformed into
+
+```
+http://www.google.com/?search=abc
+http://www.google.com/?search=def
+http://www.google.com/?search=abc
+http://www.google.com/?search=def
+... # as you expected, a cycle
+```
+
+### SMTP configuration
 
 The smtp configuration file for `smtp.example.clj` is
 
@@ -134,6 +165,9 @@ This tool is still in experimental status, but all the example configs should wo
 * utility functions
 
 ## News and changes
+
+* **v0.3.3**
+  - Experimental feature `:params-fn`
 
 * **v0.3.2**
   - Wrap (eval validator) to let block, hopefully can solve memory out of space error
