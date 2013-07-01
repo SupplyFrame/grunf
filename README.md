@@ -1,4 +1,4 @@
-# grunf 0.3.3 (Beta)
+# grunf 0.3.4 (Beta)
 
 (simple clojure-based http monitoring tool)
 
@@ -165,6 +165,9 @@ This tool is still in experimental status, but all the example configs should wo
 * utility functions
 
 ## News and changes
+
+* **v0.3.4**
+  - IO exception handling improved in graphite adapter.
 
 * **v0.3.3**
   - Experimental feature `:params-fn`

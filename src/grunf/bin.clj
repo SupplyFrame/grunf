@@ -115,7 +115,9 @@ lein run -c conf.example.clj --csv logs/bar.csv")
      "grunf.adapter.csv"
      {:out (daily-logger (:csv options) csv-pattern)}
      "grunf.adapter.postal"
-     {:pattern log-pattern})
+     {:pattern log-pattern}
+     "grunf.adapter.graphite"
+     {:pattern csv-pattern})
     (try
       (let [smtp-config (create-smtp options)
             urls-config (read-urls-config (:config options))
