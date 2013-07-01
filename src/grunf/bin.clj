@@ -131,8 +131,8 @@ lein run -c conf.example.clj --csv logs/bar.csv")
                 task (reduce merge [{:interval (:interval options)}
                                     url-config
                                     http-options])]
-            (.start (Thread. (fn [] (fetch task adapters) ))) )
-          (Thread/sleep 3000)))
+            (fetch task adapters))
+          (Thread/sleep 5000)))
       (catch Exception e
         (println e)
         (System/exit -1)))))

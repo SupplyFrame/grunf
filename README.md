@@ -166,6 +166,9 @@ This tool is still in experimental status, but all the example configs should wo
 
 ## News and changes
 
+* **v0.3.5**
+  - Fixed memory issue by using constant threads
+
 * **v0.3.4**
   - IO exception handling improved in graphite adapter.
 

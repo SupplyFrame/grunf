@@ -1,4 +1,4 @@
-(defproject grunf "0.3.4"
+(defproject grunf "0.3.5"
   :description "simple infrastructure monitoring toolkit"
   :url "https://github.com/SupplyFrame/grunf"
   :main grunf.bin
@@ -13,4 +13,5 @@
                  [org.clojure/tools.cli "0.2.2"]
                  [org.clojure/clojure "1.5.1"]
                  [clojail "1.0.6"]
+                 [overtone/at-at "1.2.0"]
                  ])
