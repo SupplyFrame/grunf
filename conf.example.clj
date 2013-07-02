@@ -1,13 +1,13 @@
 [{
   :url "http://www.google.com"
   :interval 50000
-  :validator #(re-find #"yahoo" %)
+  ;;:validator #(re-find #"yahoo" %) ;; will show error :)
   :http-options {:timeout 2000
                  :user-agent "Mozilla"}
+  ;;:params-fn (map #(hash-map :id %) (iterate + 0))
   ;; :graphite-ns "com.yahoo.www"
   ;; explicitly setup graphite namespace
 
-  :name "hoho"
   ;; sub namespace
   ;; graphite namespace would be "com.google.www.hoho"
   }
