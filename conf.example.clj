@@ -1,6 +1,6 @@
 [{
   :url "http://www.google.com"
-  :interval 50000
+  ;;:interval 50000
   ;;:validator #(re-find #"yahoo" %) ;; will show error :)
   :http-options {:timeout 2000
                  :user-agent "Mozilla"}

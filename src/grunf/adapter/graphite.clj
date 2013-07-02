@@ -10,7 +10,7 @@
 
 (defmacro with-socket [[sym socket] & body]
   `(with-open [sck# (.getOutputStream ~socket)]
-     (let [~sym sck#]
+     (binding [~sym (PrintWriter. sck#)]
        ~@body)))
 
 (defonce pool (Executors/newFixedThreadPool 32))
@@ -23,9 +23,9 @@
       (.execute pool
        (fn []
          (try
-           (with-socket [s (Socket. (.host this) (.port this))]
+           (with-socket [*out* (Socket. (.host this) (.port this))]
              (do-template [type value]
-                          (.println s (str (.namespace this) "." type)
+                          (println (str (.namespace this) "." type)
                                     value
                                     (-> start (/ 1000) (int)))
                           "response_time" (- (System/currentTimeMillis) start)
@@ -40,8 +40,8 @@
           body :body}]
       (.execute pool
        (try
-         (with-socket [s (Socket. (.host this) (.port this))]
-           (.println s (str (.namespace this) ".error") 1 (-> start (/ 1000) (int))))
+         (with-socket [*out* (Socket. (.host this) (.port this))]
+           (println (str (.namespace this) ".error") 1 (-> start (/ 1000) (int))))
          (catch ConnectException e
            (log/error (str  "Cannot connect to graphite server") (.host this) (.port this)))))))
   (log-redirect [this] (fn [_]))
@@ -51,7 +51,7 @@
     (fn [{{start :start} :opts}]
       (.execute pool
        (try
-         (with-socket [s (Socket. (.host this) (.port this))]
-           (.println s (str (.namespace this) ".error") 1 (-> start (/ 1000) (int))))
+         (with-socket [*out* (Socket. (.host this) (.port this))]
+           (println (str (.namespace this) ".error") 1 (-> start (/ 1000) (int))))
          (catch ConnectException e
            (log/error (str  "Cannot connect to graphite server") (.host this) (.port this))))))))
