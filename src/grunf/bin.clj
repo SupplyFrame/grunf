@@ -4,17 +4,20 @@
 (ns grunf.bin
   "grunf.main"
   (:use [clojure.tools.cli :only [cli]]
+        [riemann.client :only [tcp-client]]
         clj-logging-config.log4j
         grunf.core
         grunf.adapter.log4j
         grunf.adapter.graphite
         grunf.adapter.postal
         grunf.adapter.csv
+        grunf.adapter.riemann
         grunf.utils)
   (:import [org.apache.log4j DailyRollingFileAppender EnhancedPatternLayout]
            [grunf.adapter.log4j Log4j]
            [grunf.adapter.graphite Graphite]
            [grunf.adapter.postal Mail]
+           [grunf.adapter.riemann RiemannAdapter]
            [grunf.adapter.csv CSV])
   (:gen-class))
 
@@ -32,6 +35,8 @@
    ["--graphite-host" "Graphite server host"]
    ["--graphite-port" "Graphite server port" :default 2003 :parse-fn #(Integer. %)]
    ["--graphite-prefix" "prefix namespace for graphite"]
+   ["--riemann-host" "Riemann host"]
+   ["--riemann-port" :default 5555 :parse-fn #(Integer. %)]
    ["--hostname" "This server's hostname" :default "127.0.0.1"]
    ["--csv" "csv log path"]
    ["--interval" "Default interval for each url request" :default 60000 :parse-fn #(Integer. %)]
@@ -50,13 +55,6 @@ lein run -c conf.example.clj -s smtp.example.clj
 # CSV output example
 lein run -c conf.example.clj --csv logs/bar.csv")
 
-;; TODOs
-;; 4. use (.start (Thread. (fn ...))) instead of future
-;;    or pcalls
-;; 5. smtp creator in main or util?
-;; 6. merge config is super ugly...
-;; 7. http options
-;; 8. graphite namespace
 
 (defn- create-smtp [options]
   (if-let [smtp-file (:smtp-config options)]
@@ -66,6 +64,10 @@ lein run -c conf.example.clj --csv logs/bar.csv")
              (Mail. (:hostname options) 60000))
          (catch java.io.IOException e
            (throw (java.io.IOException. "smtp config file not found"))))))
+
+(defn- create-riemann [options]
+  (if-let [host (:riemann-host options)]
+    (RiemannAdapter. (tcp-client :host host :port (:riemann-port options)))))
 
 (defn- read-urls-config [file]
   "Read config and throw exception if validation failed"
@@ -124,9 +126,10 @@ lein run -c conf.example.clj --csv logs/bar.csv")
             csv (if (:csv options) (CSV.))
             log4j (Log4j.)
             mk-graphite (with-graphite-global options (:graphite-prefix options))
-            mk-http-option (with-http-global options)]
+            mk-http-option (with-http-global options)
+            riemann (create-riemann options)]
         (doseq [url-config urls-config]
-          (let [adapters (filter identity [log4j smtp-config csv (mk-graphite url-config)])
+          (let [adapters (filter identity [log4j smtp-config csv (mk-graphite url-config) riemann])
                 http-options (mk-http-option (:http-options url-config))
                 task (reduce merge [{:interval (:interval options)}
                                     url-config

@@ -84,6 +84,7 @@
                   (assoc http-options   ; http-options
                     :validator validator
                     :validator-source validator
+                    :interval interval
                     :as :text
                     :start start)
                   callback)

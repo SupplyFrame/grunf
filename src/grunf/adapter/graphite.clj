@@ -13,7 +13,7 @@
      (binding [~sym (PrintWriter. sck#)]
        ~@body)))
 
-(defonce pool (Executors/newFixedThreadPool 32))
+(defonce pool (Executors/newFixedThreadPool 8))
 
 (deftype Graphite [namespace host port]
   GrunfOutputAdapter

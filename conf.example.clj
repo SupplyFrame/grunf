@@ -1,5 +1,5 @@
 [{
-  :url "http://www.google.com"
+  :url "http://www.yahoo.com"
   ;;:interval 50000
   ;;:validator #(re-find #"yahoo" %) ;; will show error :)
   :http-options {:timeout 2000
