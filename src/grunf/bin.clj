@@ -133,7 +133,7 @@ lein run -c conf.example.clj --csv logs/bar.csv")
                 http-options (mk-http-option (:http-options url-config))
                 task (reduce merge [{:interval (:interval options)}
                                     url-config
-                                    http-options])]
+                                    {:http-options http-options}])]
             (fetch task adapters))
           (Thread/sleep 5000)))
       (catch Exception e

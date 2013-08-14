@@ -62,6 +62,8 @@ Usage:
  --graphite-host                   Graphite server host
  --graphite-port        2003       Graphite server port
  --graphite-prefix                 prefix namespace for graphite
+ --riemann-host                    Riemann host
+ --riemann-port         5555
  --hostname             127.0.0.1  This server's hostname
  --csv                             csv log path
  --interval             60000      Default interval for each url request
