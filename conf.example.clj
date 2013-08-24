@@ -1,17 +1,12 @@
 [{
   :url "http://www.yahoo.com"
-  ;;:interval 50000
-  ;;:validator #(re-find #"yahoo" %) ;; will show error :)
+  :interval 50000
   :http-options {:timeout 2000
                  :user-agent "Mozilla"}
-  ;;:params-fn (map #(hash-map :id %) (iterate + 0))
-  ;; :graphite-ns "com.yahoo.www"
-  ;; explicitly setup graphite namespace
-
-  ;; sub namespace
-  ;; graphite namespace would be "com.google.www.hoho"
+  :riemann-tags ["Yahoo" "Homepage"]
   }
  {
   :url "http://google.com"
+  :riemann-tags ["Google" "Homepage"]
   }
 ]

@@ -53,7 +53,8 @@ lein trampoline run --log logs/foo.log -c conf.example.clj & tail -f logs/foo.lo
 # SMTP example:
 lein run -c conf.example.clj -s smtp.example.clj
 # CSV output example
-lein run -c conf.example.clj --csv logs/bar.csv")
+lein run -c conf.example.clj --csv logs/bar.csv
+lein run -c conf.example.clj --riemann-host 0.0.0.0 --riemann-port 5555")
 
 
 (defn- create-smtp [options]
@@ -65,9 +66,14 @@ lein run -c conf.example.clj --csv logs/bar.csv")
          (catch java.io.IOException e
            (throw (java.io.IOException. "smtp config file not found"))))))
 
-(defn- create-riemann [options]
+(defn- with-riemann-global [options]
   (if-let [host (:riemann-host options)]
-    (RiemannAdapter. (tcp-client :host host :port (:riemann-port options)))))
+    (fn [{:keys [riemann-tags]}]
+      (RiemannAdapter. (tcp-client :host host :port (:riemann-port options))
+                       (if riemann-tags
+                         riemann-tags
+                         [])))
+    (fn [_])))
 
 (defn- read-urls-config [file]
   "Read config and throw exception if validation failed"
@@ -127,9 +133,10 @@ lein run -c conf.example.clj --csv logs/bar.csv")
             log4j (Log4j.)
             mk-graphite (with-graphite-global options (:graphite-prefix options))
             mk-http-option (with-http-global options)
-            riemann (create-riemann options)]
+            mk-riemann (with-riemann-global options)
+            ]
         (doseq [url-config urls-config]
-          (let [adapters (filter identity [log4j smtp-config csv (mk-graphite url-config) riemann])
+          (let [adapters (filter identity [log4j smtp-config csv (mk-graphite url-config) (mk-riemann url-config)])
                 http-options (mk-http-option (:http-options url-config))
                 task (reduce merge [{:interval (:interval options)}
                                     url-config

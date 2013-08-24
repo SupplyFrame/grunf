@@ -1,10 +1,10 @@
-(defproject grunf "0.3.5"
+(defproject grunf "0.3.6"
   :description "simple infrastructure monitoring toolkit"
   :url "https://github.com/SupplyFrame/grunf"
   :main grunf.bin
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
-  :jvm-opts ["-Xmx1024m"]
+  :jvm-opts ["-Xmx1g" "-server"] 
   :dependencies [
                  [com.draines/postal "1.10.3"]
                  [clj-logging-config "1.9.10"]

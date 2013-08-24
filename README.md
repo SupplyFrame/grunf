@@ -1,4 +1,4 @@
-# grunf 0.3.4 (Beta)
+# grunf 0.3.6 (Beta)
 
 (simple clojure-based http monitoring tool)
 
@@ -47,6 +47,14 @@ export csv in logs/bar.csv
 lein run -c conf.example.clj --csv logs/bar.csv
 ```
 
+Forward events to [Riemann][]
+
+[Riemann]: http://riemann.io
+
+```
+lein run -c conf.example.clj --riemann-host 127.0.0.1 --riemann-port 5555
+``
+
 ## Command line options
 
 The command line options for grunf are:
@@ -87,6 +95,7 @@ The configuration file format for `conf.example.clj` is
                  :user-agent "Mozilla"}
   :graphite-ns "com.yahoo.www"        ;; defualt to reverse domain name
   :params-fn (map #(hash-map :id %) (iterate inc 0)) ;; programatically control query params
+  :riemann-tags ["Yahoo" "Homepage"]
   }
   {:url "http://www.google.com/?search=abc"
    :name "search"                     ;; append to graphite namespace

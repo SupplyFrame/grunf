@@ -4,7 +4,7 @@
         [grunf.core :only [GrunfOutputAdapter]])
   (:import [java.io IOException]))
 
-(deftype RiemannAdapter [client]
+(deftype RiemannAdapter [client tags]
   GrunfOutputAdapter
   (log-success [this]
     (fn [{{start :start
@@ -15,7 +15,7 @@
                     {:service url
                      :state "ok"
                      :time (int (/ (System/currentTimeMillis) 1000))
-                     :tags ["grunf"]
+                     :tags (merge tags "grunf")
                      :description "query time"
                      :metric (- (System/currentTimeMillis) start)
                      :ttl (/ (* ttl 2) 1000)
@@ -29,7 +29,7 @@
                        {:service url
                         :state "warning"
                         :time (int (/ (System/currentTimeMillis) 1000))
-                        :tags ["grunf"]
+                        :tags (merge tags "grunf")
                         :description "validation error"
                         :metric (- (System/currentTimeMillis) start)
                         :ttl (/ (* ttl 2) 1000)
@@ -48,7 +48,7 @@
                        {:service url
                         :state "error"
                         :time (int (/ (System/currentTimeMillis) 1000))
-                        :tags ["grunf"]
+                        :tags (merge tags "grunf")
                         :description (str status ", error:" error)
                         :metric (- (System/currentTimeMillis) start)
                         :ttl (/ (* ttl 2) 1000)
