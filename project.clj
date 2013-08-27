@@ -1,4 +1,4 @@
-(defproject grunf "0.3.6"
+(defproject grunf "0.3.7"
   :description "simple infrastructure monitoring toolkit"
   :url "https://github.com/SupplyFrame/grunf"
   :main grunf.bin
@@ -8,6 +8,7 @@
   :dependencies [
                  [com.draines/postal "1.10.3"]
                  [clj-logging-config "1.9.10"]
+                 [org.slf4j/slf4j-log4j12 "1.5.6"]
                  [log4j/log4j "1.2.16" :exclusions [javax.mail/mail javax.jms/jms com.sun.jdmk/jmxtools com.sun.jmx/jmxri]]
                  [org.clojure/tools.logging "0.2.6"]
                  [http-kit "2.1.2"]

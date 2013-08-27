@@ -1,4 +1,4 @@
-# grunf 0.3.6 (Beta)
+# grunf 0.3.7 (Beta)
 
 (simple clojure-based http monitoring tool)
 
@@ -176,6 +176,12 @@ This tool is still in experimental status, but all the example configs should wo
 * utility functions
 
 ## News and changes
+
+* **v0.3.7**
+  - Fix log4j issues
+
+* **v0.3.6**
+  - Added Riemann support
 
 * **v0.3.5**
   - Fixed memory issue by using constant threads
