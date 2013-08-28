@@ -1,4 +1,4 @@
-# grunf 0.3.8 (Beta)
+# grunf 0.3.9 (Beta)
 
 (simple clojure-based http monitoring tool)
 
@@ -176,6 +176,9 @@ This tool is still in experimental status, but all the example configs should wo
 * utility functions
 
 ## News and changes
+
+* **v0.3.9**
+  - Custom thread executor to get more robust control over graphite connection
 
 * **v0.3.8**
   - Fix graphite exception (should use a thunk)
