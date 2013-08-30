@@ -3,24 +3,17 @@
   (:require [clojure.string :as str]
             [clojure.tools.logging :as log])
   (:use clojure.template
-        [grunf.core :only [GrunfOutputAdapter]])
+        [grunf.core :only [GrunfOutputAdapter pool]])
   (:import [java.net Socket ConnectException]
            [java.io PrintWriter]
            [java.util.concurrent ThreadPoolExecutor TimeUnit ArrayBlockingQueue ThreadPoolExecutor$DiscardOldestPolicy]
 ))
 
+
 (defmacro with-socket [[sym socket] & body]
   `(with-open [sck# (.getOutputStream ~socket)]
      (binding [~sym (PrintWriter. sck#)]
        ~@body)))
-
-(defonce pool (ThreadPoolExecutor.
-               4                                         ; 4 core threads
-               20                                        ; Takes 10mb memory size, and opens 20 sockets at most.
-               180 TimeUnit/SECONDS                      ; keep alive for 3 min
-               (ArrayBlockingQueue. 200)                 ; queue for 200 jobs
-               (ThreadPoolExecutor$DiscardOldestPolicy.) ; discard oldest jobs if the queue is out of space
-               ))
 
 (deftype Graphite [namespace host port]
   GrunfOutputAdapter

@@ -1,7 +1,10 @@
 (ns grunf.utils
   (:require [ clojure.string :as s])
   (:use grunf.adapter.graphite)
-  (:import [grunf.adapter.graphite Graphite]))
+  (:import [grunf.adapter.graphite Graphite]
+))
+
+
 
 (defn url->rev-host
   "Resove host, than reverse the order

@@ -5,7 +5,9 @@
             )
   (:use overtone.at-at)
   (:import [java.net URLEncoder]
-           [java.util.concurrent ScheduledThreadPoolExecutor TimeUnit ThreadPoolExecutor]))
+           [java.util.concurrent
+            TimeUnit ThreadPoolExecutor
+            ArrayBlockingQueue ThreadPoolExecutor$DiscardOldestPolicy]))
 
 (defprotocol GrunfOutputAdapter
   "A protocol for grunf instance to log or push data to other service"
@@ -16,7 +18,14 @@
   (log-validate-error [this] "validation failed")
   (log-unknown-error [this] "link error or unknown status code"))
 
-(defonce my-pool (mk-pool))
+(defonce at-at-pool (mk-pool))
+(defonce pool (ThreadPoolExecutor.
+               4                        ; 4 core threads
+               20 ; Takes 10mb memory size, and opens 20 sockets at most.
+               180 TimeUnit/SECONDS      ; keep alive for 3 min
+               (ArrayBlockingQueue. 200) ; queue for 200 jobs
+               (ThreadPoolExecutor$DiscardOldestPolicy.) ; discard oldest jobs if the queue is out of space
+               ))
 
 (defn- http-method
   "take http-method names and return actual instance"
@@ -89,6 +98,6 @@
                     :start start)
                   callback)
                  (swap! params-seq rest)))
-             my-pool))))
+             at-at-pool))))
 
 
