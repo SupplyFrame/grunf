@@ -51,8 +51,10 @@
   ([options] (with-graphite-global options nil))
   ([{:keys [graphite-host graphite-port]} prefix-ns]
      (if graphite-host
-       (fn [{:keys [graphite-ns name url]}]
-         (let [prefix-ns (if prefix-ns (str prefix-ns "."))
+       (fn [{:keys [graphite-ns name url gh-prefix]}]
+         (let [prefix-ns (cond
+                          gh-prefix (str prefix-ns ".")
+                          prefix-ns (str prefix-ns "."))
                ns (str prefix-ns
                        (cond graphite-ns graphite-ns
                              name (str (url->rev-host url) "." name)

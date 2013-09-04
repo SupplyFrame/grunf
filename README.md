@@ -1,4 +1,4 @@
-# grunf 0.3.9 (Beta)
+# grunf 0.3.10 (Beta)
 
 (simple clojure-based http monitoring tool)
 
@@ -80,6 +80,8 @@ Usage:
  -s, --smtp-config                 Path to smtp config file 
  -h, --no-help, --help  false      Print this message
 ```
+
+For graphite and riemann, must specify `graphite-host` and `riemann-host` to trigger the feature.
 
 ## Configuration files format
 
@@ -176,6 +178,9 @@ This tool is still in experimental status, but all the example configs should wo
 * utility functions
 
 ## News and changes
+
+* **v0.3.10**
+  - Use thread executor to send message to riemann asynchronously.
 
 * **v0.3.9**
   - Custom thread executor to get more robust control over graphite connection
