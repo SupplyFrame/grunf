@@ -2,7 +2,8 @@
   "riemann adapter"
   (:use riemann.client
         [grunf.core :only [GrunfOutputAdapter pool]])
-  (:import [java.io IOException]))
+  (:import [java.io IOException]
+           [java.net ConnectException UnknownHostException]))
 
 (deftype RiemannAdapter [client tags]
   GrunfOutputAdapter
@@ -74,12 +75,19 @@
            error :error
            status :status}]
       (let [now (int (/ (System/currentTimeMillis)))
-            diff (- (System/currentTimeMillis) start)]
+            diff (- (System/currentTimeMillis) start)
+            state (cond 
+                    (instance? java.net.UnknownHostException error)
+                    "error: UnkownHostException"
+                    (instance? java.net.ConnectException error)
+                    "error: ConnectException"
+                    :else
+                    "error: nil")]
         (.execute pool
                   (fn []
                     (try (send-event (.client this)
                                      {:service url
-                                      :state (str "error: unknown") ; can be nil...
+                                      :state state
                                       :time (int (/ (System/currentTimeMillis) 1000))
                                       :tags (merge tags "grunf")
                                       :description (str "error:" error)

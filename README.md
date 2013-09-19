@@ -1,4 +1,4 @@
-# grunf 0.3.10 (Beta)
+# grunf 0.3.11 (Beta)
 
 (simple clojure-based http monitoring tool)
 
@@ -178,6 +178,9 @@ This tool is still in experimental status, but all the example configs should wo
 * utility functions
 
 ## News and changes
+
+* **v0.3.11**
+  - Added UnknownHostException and ConnectException to Riemann adapter
 
 * **v0.3.10**
   - Use thread executor to send message to riemann asynchronously.
