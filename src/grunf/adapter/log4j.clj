@@ -1,8 +1,7 @@
 (ns grunf.adapter.log4j
   "log4j adapter"
   (:require [clojure.string :as str]
-            [clojure.tools.logging :as log]
-            [clojure.data.json :as json])
+            [clojure.tools.logging :as log])
   (:use clj-logging-config.log4j
         [clojure.java.shell :only [sh]]
         [grunf.core :only [GrunfOutputAdapter]]))
@@ -35,11 +34,12 @@
           status :status
           headers :headers
           {url :url} :opts}]
-      (future (try (sh (.script this)
-                       url
-                       (if (nil? status) "null" status)
-                       (str  error))
-                   (catch Exception e (log/error e))))
+      (when (.script this)
+        (future (try (sh (.script this)
+                         url
+                         (if (nil? status) "null" status)
+                         (str  error))
+                     (catch Exception e (log/error e)))))
       (log/error status url error headers)
       ))
   (log-client-error [this] (grunf.core/log-unknown-error this))

@@ -10,7 +10,7 @@
         grunf.adapter.csv
         grunf.adapter.riemann
         grunf.utils)
-  (:import [org.apache.log4j DailyRollingFileAppender EnhancedPatternLayout]
+  (:import [org.apache.log4j DailyRollingFileAppender EnhancedPatternLayout RollingFileAppender]
            [grunf.adapter.log4j Log4j]
            [grunf.adapter.graphite Graphite]
            [grunf.adapter.postal Mail]
@@ -29,6 +29,7 @@
   [["-c" "--config" "Path to the config file"]
    ["--log" "log path for log4j. If not specified, log to console"]
    ["--log-level" "log level for log4j, (fatal|error|warn|info|debug)" :default "debug"]
+   ["--[no-]rolling" "Use fixed size rolling file" :default false]
    ["--graphite-host" "Graphite server host"]
    ["--graphite-port" "Graphite server port" :default 2003 :parse-fn #(Integer. %)]
    ["--graphite-prefix" "prefix namespace for graphite"]
@@ -98,6 +99,11 @@ lein run -c conf.example.clj --riemann-host 0.0.0.0 --riemann-port 5555")
      file
      "'.'yyyy-MM-dd")))
 
+(defn- rolling-logger [file log-pattern]
+  (when file
+    (doto (RollingFileAppender. (EnhancedPatternLayout. log-pattern) file true)
+      (.setMaxBackupIndex 20)
+      (.setMaxFileSize "20MB"))))
 
 (defn- with-http-global [{:keys [timeout user-agent]}]
   (fn [http-options-local]
@@ -116,10 +122,13 @@ lein run -c conf.example.clj --riemann-host 0.0.0.0 --riemann-port 5555")
     (set-loggers!
      "grunf.adapter.log4j"
      {:level (-> options :log-level keyword)
-      :out (daily-logger (:log options) log-pattern)
-      :pattern log-pattern}
+      :out (if (:rolling options)
+             (rolling-logger (:log options) log-pattern)
+             (daily-logger (:log options) log-pattern))}
      "grunf.adapter.csv"
-     {:out (daily-logger (:csv options) csv-pattern)}
+     {:out (if (:rolling options)
+             (rolling-logger (:csv options) csv-pattern)
+             (daily-logger (:csv options) csv-pattern)) }
      "grunf.adapter.postal"
      {:pattern log-pattern}
      "grunf.adapter.graphite"

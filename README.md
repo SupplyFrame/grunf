@@ -1,4 +1,4 @@
-# grunf 0.3.12 (Beta)
+# grunf 0.4.01 (Beta)
 
 (simple clojure-based http monitoring tool)
 
@@ -69,24 +69,25 @@ The command line options for grunf are:
 ```
 Usage:
 
- Switches               Default    Desc
- --------               -------    ----
- -c, --config                      Path to the config file
- --log                             log path for log4j. If not specified, log to console 
- --log-level            debug      log level for log4j, (fatal|error|warn|info|debug)
- --graphite-host                   Graphite server host
- --graphite-port        2003       Graphite server port
- --graphite-prefix                 prefix namespace for graphite
- --riemann-host                    Riemann host
- --riemann-port         5555
- -s, --script                      a script to execute when receive error. The args are: url, status code, and java exception message
- --hostname             127.0.0.1  This server's hostname
- --csv                             csv log path
- --interval             60000      Default interval for each url request
- --user-agent           Grunf      Default user agent string
- --timeout              6000       Default timeout per request
- -s, --smtp-config                 Path to smtp config file 
- -h, --no-help, --help  false      Print this message
+ Switches                 Default    Desc
+ --------                 -------    ----
+ -c, --config                        Path to the config file
+ --log                               log path for log4j. If not specified, log to console 
+ --log-level              debug      log level for log4j, (fatal|error|warn|info|debug)
+ --no-rolling, --rolling  false      Use fixed size rolling file
+ --graphite-host                     Graphite server host
+ --graphite-port          2003       Graphite server port
+ --graphite-prefix                   prefix namespace for graphite
+ --riemann-host                      Riemann host
+ --riemann-port           5555
+ -s, --script                        a script to execute when receive error. The args are: url, status code, and java exception message
+ --hostname               127.0.0.1  This server's hostname
+ --csv                               csv log path
+ --interval               60000      Default interval for each url request
+ --user-agent             Grunf      Default user agent string
+ --timeout                6000       Default timeout per request
+ -s, --smtp-config                   Path to smtp config file 
+ -h, --no-help, --help    false      Print this message
 ```
 
 For graphite and riemann, must specify `graphite-host` and `riemann-host` to trigger the feature.
@@ -190,8 +191,11 @@ This tool is still in experimental status, but all the example configs should wo
 * **v0.3.12**
   - Added a option that can execute a script when receive an error.
 
+* **v0.4.01**
+  - Added Rolling file option.
+
 * **v0.3.11**
-  - Added UnknownHostException and ConnectException to Riemann adapter
+  - Added UnknownHostException and ConnectException to Riemann adapter.
 
 * **v0.3.10**
   - Use thread executor to send message to riemann asynchronously.
