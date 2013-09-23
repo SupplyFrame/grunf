@@ -1,6 +1,3 @@
-
-; grunf | simple http monitoring loop
-
 (ns grunf.bin
   "grunf.main"
   (:use [clojure.tools.cli :only [cli]]
@@ -37,6 +34,7 @@
    ["--graphite-prefix" "prefix namespace for graphite"]
    ["--riemann-host" "Riemann host"]
    ["--riemann-port" :default 5555 :parse-fn #(Integer. %)]
+   ["-s" "--script" "a script to execute when receive error. The args are: url, status code, and java exception message"]
    ["--hostname" "This server's hostname" :default "127.0.0.1"]
    ["--csv" "csv log path"]
    ["--interval" "Default interval for each url request" :default 60000 :parse-fn #(Integer. %)]
@@ -130,7 +128,7 @@ lein run -c conf.example.clj --riemann-host 0.0.0.0 --riemann-port 5555")
       (let [smtp-config (create-smtp options)
             urls-config (read-urls-config (:config options))
             csv (if (:csv options) (CSV.))
-            log4j (Log4j.)
+            log4j (Log4j. (:script options))
             mk-graphite (with-graphite-global options (:graphite-prefix options))
             mk-http-option (with-http-global options)
             mk-riemann (with-riemann-global options)

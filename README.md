@@ -1,4 +1,4 @@
-# grunf 0.3.11 (Beta)
+# grunf 0.3.12 (Beta)
 
 (simple clojure-based http monitoring tool)
 
@@ -55,6 +55,13 @@ Forward events to [Riemann][]
 lein run -c conf.example.clj --riemann-host 127.0.0.1 --riemann-port 5555
 ``
 
+Run a script when receive error. The arguments passed to the script are
+url, status code ("null" when there's no status code), and exception message.
+
+```
+lein run -c conf.example.clj --script ./my-script.sh
+```
+
 ## Command line options
 
 The command line options for grunf are:
@@ -72,6 +79,7 @@ Usage:
  --graphite-prefix                 prefix namespace for graphite
  --riemann-host                    Riemann host
  --riemann-port         5555
+ -s, --script                      a script to execute when receive error. The args are: url, status code, and java exception message
  --hostname             127.0.0.1  This server's hostname
  --csv                             csv log path
  --interval             60000      Default interval for each url request
@@ -178,6 +186,9 @@ This tool is still in experimental status, but all the example configs should wo
 * utility functions
 
 ## News and changes
+
+* **v0.3.12**
+  - Added a option that can execute a script when receive an error.
 
 * **v0.3.11**
   - Added UnknownHostException and ConnectException to Riemann adapter
