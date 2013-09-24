@@ -22,7 +22,7 @@
 (def log-pattern "Log4j pattern layout"
   "%d{ISO8601}{GMT} [%-5p] [%t] - %m%n")
 
-(def csv-pattern "%d{ABSOLUTE},[%-5p],%m%n")
+(def csv-pattern "%d{dd-MMM-yyyy HH:mm:ss},[%-5p],%m%n")
 
 (def cli-options
   "Grunf command line options"
