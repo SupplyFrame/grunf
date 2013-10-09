@@ -1,4 +1,4 @@
-# grunf 0.4.01 (Beta)
+# grunf 0.4.02 (Beta)
 
 (simple clojure-based http monitoring tool)
 
@@ -187,6 +187,9 @@ This tool is still in experimental status, but all the example configs should wo
 * utility functions
 
 ## News and changes
+
+* **v0.4.02**
+  - Export http headers to riemann
 
 * **v0.3.12**
   - Added a option that can execute a script when receive an error.

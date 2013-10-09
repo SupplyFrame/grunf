@@ -51,6 +51,7 @@
   (log-server-error [this]
     (fn [{{start :start
            url :url
+           headers :headers
            ttl :interval} :opts
            error :error
            status :status}]
@@ -63,7 +64,7 @@
                                       :state (str "error: " status)
                                       :time (int (/ (System/currentTimeMillis) 1000))
                                       :tags (merge tags "grunf")
-                                      :description (str "error:" error)
+                                      :description (str "error:" error "\n" headers)
                                       :metric (- (System/currentTimeMillis) start)
                                       :ttl (/ (* ttl 2) 1000)
                                       })
