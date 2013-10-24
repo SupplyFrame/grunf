@@ -20,11 +20,13 @@
 ## Usage
 
 read config file and log in console.
+
 ```
 lein run --log-level info --config conf.example.clj
 ```
 
 Send events to graphite
+
 ```
 lein run --config conf.example.clj --graphite-host localhost
 ```
@@ -38,11 +40,13 @@ tail -f logs/foo.log
 ```
 
 Read smtp config, will send mails when receive error
+
 ```
 lein run -c conf.example.clj -s smtp.example.clj
 ```
 
 export csv in logs/bar.csv
+
 ```
 lein run -c conf.example.clj --csv logs/bar.csv
 ```
@@ -53,7 +57,7 @@ Forward events to [Riemann][]
 
 ```
 lein run -c conf.example.clj --riemann-host 127.0.0.1 --riemann-port 5555
-``
+```
 
 Run a script when receive error. The arguments passed to the script are
 url, status code ("null" when there's no status code), and exception message.
