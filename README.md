@@ -66,29 +66,29 @@ lein run -c conf.example.clj --script ./my-script.sh
 
 The command line options for grunf are:
 
-```
-Usage:
 
- Switches                 Default    Desc
- --------                 -------    ----
- -c, --config                        Path to the config file
- --log                               log path for log4j. If not specified, log to console 
- --log-level              debug      log level for log4j, (fatal|error|warn|info|debug)
- --no-rolling, --rolling  false      Use fixed size rolling file
- --graphite-host                     Graphite server host
- --graphite-port          2003       Graphite server port
- --graphite-prefix                   prefix namespace for graphite
- --riemann-host                      Riemann host
- --riemann-port           5555
- -s, --script                        a script to execute when receive error. The args are: url, status code, and java exception message
- --hostname               127.0.0.1  This server's hostname
- --csv                               csv log path
- --interval               60000      Default interval for each url request
- --user-agent             Grunf      Default user agent string
- --timeout                6000       Default timeout per request
- -s, --smtp-config                   Path to smtp config file 
- -h, --no-help, --help    false      Print this message
-```
+    Usage:
+
+    Switches                 Default    Desc
+    --------                 -------    ----
+    -c, --config                        Path to the config file
+    --log                               log path for log4j. If not specified, log to console 
+    --log-level              debug      log level for log4j, (fatal|error|warn|info|debug)
+    --no-rolling, --rolling  false      Use fixed size rolling file
+    --graphite-host                     Graphite server host
+    --graphite-port          2003       Graphite server port
+    --graphite-prefix                   prefix namespace for graphite
+    --riemann-host                      Riemann host
+    --riemann-port           5555
+    -s, --script                        a script to execute when receive error. The args are: url, status code, and java exception message
+    --hostname               127.0.0.1  This server's hostname
+    --csv                               csv log path
+    --interval               60000      Default interval for each url request
+    --user-agent             Grunf      Default user agent string
+    --timeout                6000       Default timeout per request
+    -s, --smtp-config                   Path to smtp config file 
+    -h, --no-help, --help    false      Print this message
+
 
 For graphite and riemann, must specify `graphite-host` and `riemann-host` to trigger the feature.
 
