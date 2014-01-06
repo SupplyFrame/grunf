@@ -65,13 +65,14 @@ lein run -c conf.example.clj --riemann-host 0.0.0.0 --riemann-port 5555")
          (catch java.io.IOException e
            (throw (java.io.IOException. "smtp config file not found"))))))
 
-(defn- with-riemann-global [options]
-  (if-let [host (:riemann-host options)]
-    (fn [{:keys [riemann-tags]}]
-      (RiemannAdapter. (tcp-client :host host :port (:riemann-port options))
-                       (if riemann-tags
-                         riemann-tags
-                         [])))
+(defn- with-riemann-global [{:keys [riemann-host hostname riemann-port]
+                             :or {hostname (.getHostName (java.net.InetAddress/getLocalHost))}}]
+  (if riemann-host
+    (fn [{:keys [riemann-tags]
+          :or {riemann-tags []}}]
+      (RiemannAdapter. (tcp-client :host riemann-host :port riemann-port)
+                       riemann-tags
+                       hostname))
     (fn [_])))
 
 (defn- read-urls-config [file]

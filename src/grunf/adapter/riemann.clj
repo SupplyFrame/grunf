@@ -5,7 +5,7 @@
   (:import [java.io IOException]
            [java.net ConnectException UnknownHostException]))
 
-(deftype RiemannAdapter [client tags]
+(deftype RiemannAdapter [client tags hostname]
   GrunfOutputAdapter
   (log-success [this]
     (fn [{{start :start
@@ -21,7 +21,8 @@
                   (fn []
                     (try
                       (send-event (.client this)
-                                  {:service service
+                                  {:host (.hostname this)
+                                   :service service
                                    :state (str "ok: " status)
                                    :time now
                                    :tags (merge tags "grunf")
@@ -42,7 +43,8 @@
         (.execute pool
                   (fn []
                     (try (send-event (.client this)
-                                     {:service service
+                                     {:host (.hostname this)
+                                      :service service
                                       :state (str "warning: " status)
                                       :time now
                                       :tags (merge tags "grunf")
@@ -67,7 +69,8 @@
         (.execute pool
                   (fn []
                     (try (send-event (.client this)
-                                     {:service service
+                                     {:host (.hostname this)
+                                      :service service
                                       :state (str "error: " status)
                                       :time (int (/ (System/currentTimeMillis) 1000))
                                       :tags (merge tags "grunf")
@@ -96,7 +99,8 @@
         (.execute pool
                   (fn []
                     (try (send-event (.client this)
-                                     {:service service
+                                     {:host (.hostname this)
+                                      :service service
                                       :state state
                                       :time (int (/ (System/currentTimeMillis) 1000))
                                       :tags (merge tags "grunf")
