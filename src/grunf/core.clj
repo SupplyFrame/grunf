@@ -49,11 +49,12 @@
 
 
 
-(defn fetch [{:keys [url interval method http-options validator graphite-ns params-fn]
+(defn fetch [{:keys [url interval method http-options validator graphite-ns params-fn service]
               :or {interval 5000,
                    method :get,
                    validator '(constantly true)
                    graphite-ns ""
+                   service "generic service name"
                    params-fn '(repeat nil)}
               :as input-options}
              adapters]

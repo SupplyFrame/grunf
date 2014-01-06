@@ -9,6 +9,7 @@
   GrunfOutputAdapter
   (log-success [this]
     (fn [{{start :start
+           service :service
            url :url
            ttl :interval
            status :status} :opts}]
@@ -18,7 +19,7 @@
                   (fn []
                     (try
                       (send-event (.client this)
-                                  {:service url
+                                  {:service service
                                    :state (str "ok: " status)
                                    :time now
                                    :tags (merge tags "grunf")
@@ -29,6 +30,7 @@
                       (catch IOException e)))))))
   (log-validate-error [this]
     (fn [{{start :start
+           service :service
            url :url
            ttl :interval
            status :status} :opts}]
@@ -37,7 +39,7 @@
         (.execute pool
                   (fn []
                     (try (send-event (.client this)
-                                     {:service url
+                                     {:service service
                                       :state (str "warning: " status)
                                       :time now
                                       :tags (merge tags "grunf")
@@ -50,6 +52,7 @@
   (log-client-error [this] (grunf.core/log-server-error this))
   (log-server-error [this]
     (fn [{{start :start
+           service :service
            url :url
            headers :headers
            ttl :interval} :opts
@@ -60,7 +63,7 @@
         (.execute pool
                   (fn []
                     (try (send-event (.client this)
-                                     {:service url
+                                     {:service service
                                       :state (str "error: " status)
                                       :time (int (/ (System/currentTimeMillis) 1000))
                                       :tags (merge tags "grunf")
@@ -71,6 +74,7 @@
                          (catch IOException e)))))))
   (log-unknown-error [this]
     (fn [{{start :start
+           service :service
            url :url
            ttl :interval} :opts
            error :error
@@ -87,7 +91,7 @@
         (.execute pool
                   (fn []
                     (try (send-event (.client this)
-                                     {:service url
+                                     {:service service
                                       :state state
                                       :time (int (/ (System/currentTimeMillis) 1000))
                                       :tags (merge tags "grunf")
