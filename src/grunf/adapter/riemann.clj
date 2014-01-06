@@ -9,12 +9,14 @@
   GrunfOutputAdapter
   (log-success [this]
     (fn [{{start :start
-           service :service
+           riemann-service :riemann-service
            url :url
            ttl :interval
            status :status} :opts}]
       (let [now (int (/ (System/currentTimeMillis) 1000))
-            diff (- (System/currentTimeMillis) start)]
+            diff (- (System/currentTimeMillis) start)
+            service (if riemann-service riemann-service url)
+            ]
         (.execute pool
                   (fn []
                     (try
@@ -30,12 +32,13 @@
                       (catch IOException e)))))))
   (log-validate-error [this]
     (fn [{{start :start
-           service :service
+           riemann-service :riemann-service
            url :url
            ttl :interval
            status :status} :opts}]
       (let [now (int (/ (System/currentTimeMillis)))
-            diff (- (System/currentTimeMillis) start)]
+            diff (- (System/currentTimeMillis) start)
+            service (if riemann-service riemann-service url)]
         (.execute pool
                   (fn []
                     (try (send-event (.client this)
@@ -52,14 +55,15 @@
   (log-client-error [this] (grunf.core/log-server-error this))
   (log-server-error [this]
     (fn [{{start :start
-           service :service
+           riemann-service :riemann-service
            url :url
            headers :headers
            ttl :interval} :opts
            error :error
            status :status}]
       (let [now (int (/ (System/currentTimeMillis)))
-            diff (- (System/currentTimeMillis) start)]
+            diff (- (System/currentTimeMillis) start)
+            service (if riemann-service riemann-service url)]
         (.execute pool
                   (fn []
                     (try (send-event (.client this)
@@ -74,13 +78,14 @@
                          (catch IOException e)))))))
   (log-unknown-error [this]
     (fn [{{start :start
-           service :service
+           riemann-service :riemann-service
            url :url
            ttl :interval} :opts
            error :error
            status :status}]
       (let [now (int (/ (System/currentTimeMillis)))
             diff (- (System/currentTimeMillis) start)
+            service (if riemann-service riemann-service url)
             state (cond 
                     (instance? java.net.UnknownHostException error)
                     "error: UnkownHostException"

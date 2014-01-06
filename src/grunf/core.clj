@@ -49,7 +49,7 @@
 
 
 
-(defn fetch [{:keys [url interval method http-options validator graphite-ns params-fn service]
+(defn fetch [{:keys [url interval method http-options validator graphite-ns params-fn riemann-service]
               :or {interval 5000,
                    method :get,
                    validator '(constantly true)
@@ -96,6 +96,7 @@
                     :validator-source validator
                     :interval interval
                     :as :text
+                    :riemann-service riemann-service
                     :start start)
                   callback)
                  (swap! params-seq rest)))
