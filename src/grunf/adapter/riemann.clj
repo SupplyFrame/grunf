@@ -23,12 +23,12 @@
                       (send-event (.client this)
                                   {:host (.hostname this)
                                    :service service
-                                   :state (str "ok: " status)
+                                   :state "ok"
                                    :time now
                                    :tags (merge tags "grunf")
                                    :description "query time"
                                    :metric diff
-                                   :ttl (/ (* ttl 5) 1000)
+                                   :ttl (/ (* ttl 20) 1000)
                                    })
                       (catch IOException e)))))))
   (log-validate-error [this]
@@ -45,12 +45,12 @@
                     (try (send-event (.client this)
                                      {:host (.hostname this)
                                       :service service
-                                      :state (str "warning: " status)
+                                      :state "warning"
                                       :time now
                                       :tags (merge tags "grunf")
                                       :description "validation error"
                                       :metric diff
-                                      :ttl (/ (* ttl 5) 1000)
+                                      :ttl (/ (* ttl 20) 1000)
                                       })
                          (catch IOException e)))))))
   (log-redirect [this] (fn [_]))
@@ -71,12 +71,12 @@
                     (try (send-event (.client this)
                                      {:host (.hostname this)
                                       :service service
-                                      :state (str "error: " status)
+                                      :state "critical"
                                       :time (int (/ (System/currentTimeMillis) 1000))
                                       :tags (merge tags "grunf")
                                       :description (str "error:" error "\n" headers)
                                       :metric (- (System/currentTimeMillis) start)
-                                      :ttl (/ (* ttl 2) 1000)
+                                      :ttl (/ (* ttl 10) 1000)
                                       })
                          (catch IOException e)))))))
   (log-unknown-error [this]
@@ -106,7 +106,7 @@
                                       :tags (merge tags "grunf")
                                       :description (str "error:" error)
                                       :metric (- (System/currentTimeMillis) start)
-                                      :ttl (/ (* ttl 2) 1000)
+                                      :ttl (/ (* ttl 10) 1000)
                                       })
                          (catch IOException e)))))))
   )
